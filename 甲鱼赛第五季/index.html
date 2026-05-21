@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=yes, viewport-fit=cover">
+  <title>赛事评分 · 轮次管理</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+    body {
+      background: #f5f7fb;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 12px;
+    }
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      border-radius: 32px;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.05), 0 5px 15px rgba(0,0,0,0.03);
+      padding: 18px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      position: relative;
+    }
+    .page { display: none; flex-direction: column; gap: 18px; width: 100%; }
+    .page.active { display: flex; }
+
+    /* 主页 */
+    .main-header { display: flex; align-items: center; justify-content: space-between; }
+    .main-header h1 {
+      font-size: 1.8rem; font-weight: 650;
+      background: linear-gradient(135deg, #1e2b4f, #2c3e6e);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .round-list { display: flex; flex-direction: column; gap: 12px; }
+    .round-card {
+      background: #f9fafb; border: 1px solid #eef1f6; border-radius: 20px;
+      padding: 16px; display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; transition: 0.2s;
+    }
+    .round-card:active { background: #f0f2f8; }
+    .round-info h3 { font-size: 1.1rem; font-weight: 650; color: #1f2937; }
+    .round-info p { font-size: 0.8rem; color: #6b7280; }
+    .btn-icon { background: none; border: none; font-size: 1.3rem; cursor: pointer; padding: 6px; color: #6b7280; }
+    .btn {
+      background: #f9fafb; border: 1px solid #d1d5db; padding: 10px 16px; border-radius: 40px;
+      font-weight: 600; font-size: 0.9rem; cursor: pointer; display: inline-flex;
+      align-items: center; gap: 4px; white-space: nowrap; transition: 0.2s;
+    }
+    .btn-primary { background: #1e2b4f; border-color: #1e2b4f; color: white; }
+    .btn-outline { background: white; }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; border-radius: 20px; }
+
+    /* 详情页 */
+    .detail-header { display: flex; align-items: center; gap: 12px; }
+    .back-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #1e2b4f; }
+    .round-title { flex:1; font-weight:650; font-size:1.3rem; display:flex; align-items:center; gap:6px; }
+    .round-title input {
+      border:none; background:transparent; font-weight:650; font-size:1.3rem; width:140px;
+      outline:none; border-bottom:1px dashed transparent;
+    }
+    .round-title input:focus { border-bottom-color:#1e2b4f; }
+    .manage-btn { background:#f1f4f9; border:none; font-size:1.2rem; padding:8px 12px; border-radius:30px; cursor:pointer; }
+
+    .score-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+    }
+    .score-header .title { font-weight: 650; font-size: 1rem; }
+    .eye-btn {
+      background: none; border: none; font-size: 1.2rem; cursor: pointer;
+      padding: 4px 8px; border-radius: 20px; background: #f3f4f6;
+    }
+    .score-grid { display: flex; flex-direction: column; gap: 12px; max-height: 420px; overflow-y: auto; font-size: 0;  /* 新增：使文本节点字号为0，不可见 */
+}
+.score-grid > * {
+  font-size: 1rem; /* 恢复子元素正常字号 */}
+    .player-score-row {
+      background: #fafbfc; border-radius: 10px; padding: 8px; border: 1px solid #edf0f5;
+    }
+    .player-name-row { display: flex; justify-content: space-between; align-items: center; font-weight: 650; margin-bottom: 8px; }
+    .judges-inputs { display: flex; flex-wrap: wrap; gap: 2px; }
+    .judge-item {
+      display: flex; flex-direction: column; align-items: center; background: white;
+      border-radius: 14px; padding: 4px 2px; min-width: 55px; border: 1px solid #e9eef2;
+    }
+    .judge-label { font-size: 0.6rem; color: #6b7280; margin-bottom: 2px; white-space: nowrap; }
+    .judge-item input {
+      width: 52px; padding: 4px 2px; text-align: center; border: none;
+      background: transparent; font-weight: 600; font-size: 0.9rem; outline: none;
+      border-radius: 10px;
+    }
+    .judge-item input:focus { background: #eef2ff; }
+    .avg-badge {
+      background: #1e2b4f; color: white; border-radius: 20px;
+      padding: 4px 12px; font-weight: 700; font-size: 0.85rem; margin-left: 8px;
+    }
+    .ranking-list { display: flex; flex-direction: column; gap: 8px; }
+    .rank-item {
+      display: flex; align-items: center; background: #f8fafd; border-radius: 18px;
+      padding: 10px 14px; border: 1px solid #eef1f6;
+    }
+    .rank-num { font-weight: 700; font-size: 1.2rem; width: 32px; color: #1e2b4f; }
+    .rank-name { flex: 1; font-weight: 600; }
+    .rank-avg { font-weight: 700; background: #eef2ff; padding: 4px 12px; border-radius: 20px; }
+
+    /* 管理面板 */
+    .modal-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.4); display:none; align-items:flex-end; justify-content:center; z-index:100;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-sheet {
+      background: white; width:100%; max-width:480px; border-radius:28px 28px 0 0;
+      padding:20px 16px 28px; max-height:80vh; overflow-y:auto; display:flex; flex-direction:column; gap:18px;
+    }
+    .modal-handle { width:36px; height:5px; background:#d1d5db; border-radius:4px; margin:0 auto 8px; }
+    .input-group { display:flex; flex-direction:column; gap:6px; }
+    .input-group label { font-size:0.8rem; font-weight:600; color:#4b5563; }
+    .input-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .input-row input { flex:1; padding:10px 12px; border:1px solid #e5e7eb; border-radius:14px; font-size:0.9rem; background:#f9fafb; outline:none; }
+    .player-edit-item {
+      display:flex; align-items:center; gap:8px; background:#f3f4f6; padding:8px 10px; border-radius:14px; margin-bottom:6px;
+    }
+    .player-edit-item input { border:1px solid #e5e7eb; border-radius:10px; padding:6px 8px; width:70px; background:white; }
+    .flex-row { display:flex; justify-content:space-between; align-items:center; }
+  </style>
+</head>
+<body>
+<div class="app-container" id="appRoot">
+  <!-- 主页 -->
+  <div id="mainPage" class="page active">
+    <div class="main-header">
+      <h1>📋 赛事轮次</h1>
+      <button class="btn btn-primary" id="createRoundBtn">＋ 新建轮次</button>
+    </div>
+    <div id="roundListContainer" class="round-list"></div>
+  </div>
+
+  <!-- 详情页 -->
+  <div id="detailPage" class="page">
+    <div class="detail-header">
+      <button class="back-btn" id="backToMainBtn">←</button>
+      <div class="round-title">
+        <input type="text" id="detailRoundNameInput" placeholder="轮次名称">
+      </div>
+      <button class="manage-btn" id="openManagePanelBtn">⚙️</button>
+    </div>
+<div class="card" style="
+    padding-left: 0px;
+    padding-top: 8px;
+    padding-right: 0px;
+    padding-bottom: 8px;
+">
+      <div class="score-header">
+        <span class="title">📋 评委打分 <span style="font-weight:400;font-size:0.8rem;">(0.5步进)</span></span>
+        <button class="eye-btn" id="toggleJudgesNameBtn" title="切换评委名称显示">👁️</button>
+      </div>
+      <div id="scoresContainer" class="score-grid">暂无选手</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:650; margin-bottom:8px;">🏆 实时排名</div>
+      <div id="rankingContainer" class="ranking-list"></div>
+    </div>
+  </div>
+
+  <!-- 管理面板 -->
+  <div class="modal-overlay" id="manageModal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 style="font-weight:650;">⚙️ 轮次与选手管理</h3>
+      <div class="input-group">
+        <label>轮次名称</label>
+        <input type="text" id="modalRoundName" placeholder="例如：半决赛">
+      </div>
+      <div class="input-group">
+        <label>👤 评委姓名 (5位)</label>
+        <div id="judgesEditContainer" class="input-row" style="gap:6px;"></div>
+      </div>
+      <div class="input-group">
+        <div class="flex-row">
+          <label>👥 选手名单</label>
+          <button class="btn btn-outline btn-sm" id="addPlayerInModalBtn">＋ 添加选手</button>
+        </div>
+        <div id="playersEditList"></div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button class="btn btn-primary" id="saveManageBtn">保存设置</button>
+        <button class="btn" id="closeManageBtn">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const JUDGES_COUNT = 5;
+    const STORAGE_KEY = 'contest_full_data_v2';
+
+    let appData = { rounds: [] };
+    let currentRoundId = null;
+    let showRealJudgeNames = true; // 控制评委名称显示
+
+    // DOM元素
+    const mainPage = document.getElementById('mainPage');
+    const detailPage = document.getElementById('detailPage');
+    const roundListContainer = document.getElementById('roundListContainer');
+    const scoresContainer = document.getElementById('scoresContainer');
+    const rankingContainer = document.getElementById('rankingContainer');
+    const detailRoundNameInput = document.getElementById('detailRoundNameInput');
+    const manageModal = document.getElementById('manageModal');
+    const modalRoundName = document.getElementById('modalRoundName');
+    const judgesEditContainer = document.getElementById('judgesEditContainer');
+    const playersEditList = document.getElementById('playersEditList');
+    const toggleJudgesBtn = document.getElementById('toggleJudgesNameBtn');
+
+    // 工具
+    function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,6); }
+    function getRoundById(id) { return appData.rounds.find(r => r.id === id); }
+    function getCurrentRound() { return currentRoundId ? getRoundById(currentRoundId) : null; }
+
+    function isValidScore(value) {
+      if (value === '' || value === null || value === undefined) return true;
+      const str = String(value).trim();
+      if (str === '') return true;
+      if (!/^\d{1,3}(\.([05])?)?$/.test(str)) return false;
+      const num = parseFloat(str);
+      return !isNaN(num) && num >= 0 && num <= 100;
+    }
+
+    function calculateAverage(scores) {
+      const nums = scores.map(s => {
+        if (s === null || s === undefined || String(s).trim() === '') return null;
+        const n = parseFloat(s);
+        return isNaN(n) ? null : n;
+      }).filter(v => v !== null);
+      if (nums.length < 3) return null;
+      const sorted = [...nums].sort((a,b)=>a-b);
+      const trimmed = sorted.slice(1, -1);
+      return trimmed.reduce((a,b)=>a+b,0) / trimmed.length;
+    }
+
+    function getPlayerAvg(player) { return player?.scores ? calculateAverage(player.scores) : null; }
+
+    // 持久化
+    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); }
+    function loadData() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.rounds) {
+            appData = parsed;
+            appData.rounds.forEach(r => {
+              if (!r.judges || r.judges.length !== JUDGES_COUNT) r.judges = Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`);
+              r.players.forEach(p => { if (!p.scores || p.scores.length !== JUDGES_COUNT) p.scores = new Array(JUDGES_COUNT).fill(null); });
+            });
+          }
+        } catch(e){}
+      }
+      if (!appData.rounds.length) {
+        appData.rounds.push({
+          id: generateId(), name: '决赛',
+          judges: ['张老师','李老师','王老师','赵老师','陈老师'],
+          players: [
+            { id:'01', name:'选手A', scores: [null,null,null,null,null] },
+            { id:'02', name:'选手B', scores: [null,null,null,null,null] },
+            { id:'03', name:'选手C', scores: [null,null,null,null,null] }
+          ]
+        });
+        saveData();
+      }
+    }
+
+    // 页面切换
+    function showMain() { mainPage.classList.add('active'); detailPage.classList.remove('active'); renderRoundList(); }
+    function openDetail(roundId) {
+      currentRoundId = roundId;
+      const round = getCurrentRound();
+      if (!round) return;
+      detailRoundNameInput.value = round.name;
+      mainPage.classList.remove('active');
+      detailPage.classList.add('active');
+      renderScores();
+      renderRanking();
+    }
+
+    // 主页
+    function renderRoundList() {
+      if (!appData.rounds.length) {
+        roundListContainer.innerHTML = '<div style="color:#9ca3af; padding:16px;">暂无轮次</div>';
+        return;
+      }
+      roundListContainer.innerHTML = appData.rounds.map(r => `
+        <div class="round-card" data-round-id="${r.id}">
+          <div class="round-info"><h3>${r.name}</h3><p>${r.players.length} 位选手</p></div>
+          <button class="btn-icon delete-round-btn" data-id="${r.id}">🗑️</button>
+        </div>
+      `).join('');
+      document.querySelectorAll('.round-card').forEach(c => c.addEventListener('click', e => {
+        if (e.target.classList.contains('delete-round-btn')) return;
+        openDetail(c.dataset.roundId);
+      }));
+      document.querySelectorAll('.delete-round-btn').forEach(b => b.addEventListener('click', e => {
+        e.stopPropagation();
+        if (confirm('删除轮次？')) {
+          appData.rounds = appData.rounds.filter(r => r.id !== b.dataset.id);
+          saveData(); renderRoundList();
+          if (currentRoundId === b.dataset.id) { currentRoundId = null; showMain(); }
+        }
+      }));
+    }
+
+    // 详情评分渲染（无步进器，文本输入，自动跳转）
+    function renderScores() {
+      const round = getCurrentRound();
+      if (!round || !round.players.length) {
+        scoresContainer.innerHTML = '<div style="color:#9ca3af; padding:12px;">暂无选手</div>';
+        return;
+      }
+      const judges = round.judges;
+      scoresContainer.innerHTML = round.players.map(player => {
+        const scores = player.scores || [];
+        let inputsHtml = '';
+        for (let i = 0; i < JUDGES_COUNT; i++) {
+          const val = scores[i] !== undefined && scores[i] !== null ? scores[i] : '';
+          const judgeLabel = showRealJudgeNames ? (judges[i] || `评委${i+1}`) : `评委${i+1}`;
+          inputsHtml += `
+            <div class="judge-item">
+              <span class="judge-label">${judgeLabel}</span>
+              <input type="text" inputmode="decimal" pattern="[0-9]*\.?[05]?" placeholder="-" value="${val}"
+                     data-player-id="${player.id}" data-judge-index="${i}" class="score-input" autocomplete="off">
+            </div>
+          `;
+        }
+        const avg = getPlayerAvg(player);
+        return `
+          <div class="player-score-row" data-player-id="${player.id}">
+            <div class="player-name-row"><span>${player.id} ${player.name}</span><span class="avg-badge" id="avg-${player.id}">均分 ${avg!==null ? avg.toFixed(2) : '--'}</span></div>
+            <div class="judges-inputs">${inputsHtml}</div>
+          </div>
+        `;
+      });
+      document.querySelectorAll('.score-input').forEach(inp => {
+        inp.addEventListener('input', handleScoreInput);
+        inp.addEventListener('blur', handleScoreBlur);
+      });
+    }
+
+    function updateSingleAvg(playerId) {
+      const round = getCurrentRound();
+      const player = round?.players.find(p => p.id === playerId);
+      if (!player) return;
+      const avg = getPlayerAvg(player);
+      const el = document.getElementById(`avg-${playerId}`);
+      if (el) el.textContent = `均分 ${avg !== null ? avg.toFixed(2) : '--'}`;
+    }
+
+    function findNextInput(currentInput, playerId, currentIndex) {
+      const row = currentInput.closest('.player-score-row');
+      if (!row) return null;
+      const inputs = row.querySelectorAll('.score-input');
+      for (let i = currentIndex + 1; i < inputs.length; i++) {
+        if (inputs[i].value.trim() === '') return inputs[i];
+      }
+      return null;
+    }
+
+    function handleScoreInput(e) {
+      const input = e.target;
+      const playerId = input.dataset.playerId;
+      const judgeIndex = parseInt(input.dataset.judgeIndex, 10);
+      let raw = input.value.trim();
+      
+      if (raw !== '' && !isValidScore(raw)) {
+        input.style.backgroundColor = '#ffe5e5';
+        return;
+      }
+      input.style.backgroundColor = '';
+      
+      const round = getCurrentRound();
+      if (!round) return;
+      const player = round.players.find(p => p.id === playerId);
+      if (player) {
+        if (!player.scores) player.scores = new Array(JUDGES_COUNT).fill(null);
+        player.scores[judgeIndex] = raw === '' ? null : raw;
+        saveData();
+        updateSingleAvg(playerId);
+        renderRanking();
+        
+        // 自动跳转：如果输入值有效且包含小数点后一位（例如 .0 或 .5），则跳到下一个空输入框
+        if (raw !== '' && isValidScore(raw) && /\.[05]$/.test(raw)) {
+          const next = findNextInput(input, playerId, judgeIndex);
+          if (next) {
+            next.focus();
+          }
+        }
+      }
+    }
+
+    function handleScoreBlur(e) {
+      const input = e.target;
+      let raw = input.value.trim();
+      if (raw !== '' && !isValidScore(raw)) {
+        input.value = '';
+        const playerId = input.dataset.playerId;
+        const judgeIndex = parseInt(input.dataset.judgeIndex, 10);
+        const round = getCurrentRound();
+        if (round) {
+          const player = round.players.find(p => p.id === playerId);
+          if (player?.scores) {
+            player.scores[judgeIndex] = null;
+            saveData();
+            updateSingleAvg(playerId);
+            renderRanking();
+          }
+        }
+      }
+    }
+
+    function renderRanking() {
+      const round = getCurrentRound();
+      if (!round) { rankingContainer.innerHTML = ''; return; }
+      const ranked = round.players.map(p => ({...p, avg: getPlayerAvg(p)})).filter(p => p.avg !== null).sort((a,b) => b.avg - a.avg);
+      rankingContainer.innerHTML = ranked.length ? ranked.map((p,i) => `
+        <div class="rank-item"><span class="rank-num">#${i+1}</span><span class="rank-name">${p.id} ${p.name}</span><span class="rank-avg">${p.avg.toFixed(2)}</span></div>
+      `).join('') : '<div style="color:#9ca3af; padding:8px;">需要至少3个有效分数</div>';
+    }
+
+    // 评委名称切换
+    toggleJudgesBtn.addEventListener('click', () => {
+      showRealJudgeNames = !showRealJudgeNames;
+      toggleJudgesBtn.textContent = showRealJudgeNames ? '👁️' : '👁️‍🗨️';
+      renderScores(); // 重新渲染以更新标签
+    });
+
+    // 轮次名实时改
+    detailRoundNameInput.addEventListener('input', () => {
+      const round = getCurrentRound();
+      if (round) { round.name = detailRoundNameInput.value; saveData(); }
+    });
+
+    // 管理面板
+    function openManage() {
+      const round = getCurrentRound();
+      if (!round) return;
+      modalRoundName.value = round.name;
+      judgesEditContainer.innerHTML = round.judges.map((n,i) => `<input type="text" value="${n}" data-judge-index="${i}" class="judge-name-input" style="width:70px;">`).join('');
+      renderPlayerEditList(round);
+      manageModal.classList.add('active');
+    }
+    function renderPlayerEditList(round) {
+      playersEditList.innerHTML = round.players.map(p => `
+        <div class="player-edit-item" data-player-id="${p.id}">
+          <input type="text" value="${p.id}" class="edit-player-id" style="width:60px;">
+          <input type="text" value="${p.name}" class="edit-player-name" style="flex:1;">
+          <button class="btn-sm btn-outline remove-player-btn" data-id="${p.id}">删除</button>
+        </div>
+      `).join('');
+      document.querySelectorAll('.remove-player-btn').forEach(b => b.addEventListener('click', () => {
+        round.players = round.players.filter(p => p.id !== b.dataset.id);
+        renderPlayerEditList(round);
+      }));
+    }
+    document.getElementById('addPlayerInModalBtn').addEventListener('click', () => {
+      const round = getCurrentRound();
+      if (!round) return;
+      round.players.push({ id: `P${round.players.length+1}`, name: '新选手', scores: new Array(JUDGES_COUNT).fill(null) });
+      renderPlayerEditList(round);
+    });
+    document.getElementById('saveManageBtn').addEventListener('click', () => {
+      const round = getCurrentRound();
+      if (!round) return;
+      round.name = modalRoundName.value.trim() || round.name;
+      document.querySelectorAll('.judge-name-input').forEach((inp, i) => { if(i<JUDGES_COUNT) round.judges[i] = inp.value.trim() || `评委${i+1}`; });
+      const items = document.querySelectorAll('.player-edit-item');
+      const newPlayers = [];
+      items.forEach(item => {
+        const idInp = item.querySelector('.edit-player-id');
+        const nameInp = item.querySelector('.edit-player-name');
+        const existing = round.players.find(p => p.id === item.dataset.playerId);
+        if (existing) {
+          existing.id = idInp.value.trim() || existing.id;
+          existing.name = nameInp.value.trim() || existing.name;
+          newPlayers.push(existing);
+        }
+      });
+      round.players = newPlayers;
+      saveData();
+      detailRoundNameInput.value = round.name;
+      renderScores(); renderRanking();
+      manageModal.classList.remove('active');
+    });
+    document.getElementById('closeManageBtn').addEventListener('click', () => manageModal.classList.remove('active'));
+    document.getElementById('openManagePanelBtn').addEventListener('click', openManage);
+    manageModal.addEventListener('click', e => { if(e.target === manageModal) manageModal.classList.remove('active'); });
+
+    document.getElementById('backToMainBtn').addEventListener('click', showMain);
+    document.getElementById('createRoundBtn').addEventListener('click', () => {
+      const name = prompt('新轮次名称：', '半决赛');
+      if (!name) return;
+      appData.rounds.push({
+        id: generateId(), name,
+        judges: Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`),
+        players: []
+      });
+      saveData(); renderRoundList();
+    });
+
+    loadData();
+    showMain();
+  })();
+</script>
+</body>
+</html>

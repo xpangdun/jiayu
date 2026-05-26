@@ -91,6 +91,9 @@
     padding-bottom: 0px; border: 1px solid #edf0f5;
     }
     .player-name-row { display: flex; justify-content: space-between; align-items: center; font-weight: 650; margin-bottom: 4px; padding-left: 8px; }
+.player-id {margin-right: 16px;  /* 调整这个值来控制间距 */
+  font-weight: 650;}
+.player-name {flex: 1;}
     .judges-inputs { display: flex; flex-wrap: wrap; gap: 8px; }
     .judge-item {
       display: flex; flex-direction: column; align-items: center; background: white;
@@ -356,7 +359,11 @@
         const avg = getPlayerAvg(player);
         return `
           <div class="player-score-row" data-player-id="${player.id}">
-            <div class="player-name-row"><span>${player.id} ${player.name}</span><span class="avg-badge" id="avg-${player.id}">均分 ${avg!==null ? avg.toFixed(2) : '--'}</span></div>
+            <div class="player-name-row">
+  <span class="player-id">${player.id}</span>
+  <span class="player-name">${player.name}</span>
+  <span class="avg-badge" id="avg-${player.id}">均分 ${avg!==null ? avg.toFixed(2) : '--'}</span>
+</div>
             <div class="judges-inputs">${inputsHtml}</div>
           </div>
         `;

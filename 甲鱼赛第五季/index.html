@@ -78,7 +78,7 @@
     .score-header .title { font-weight: 650; font-size: 1rem; }
     .eye-btn {
       background: none; border: none; font-size: 0.8rem; cursor: pointer;
-      padding: 2px 8px; border-radius: 20px; background: white; opacity: 0.5;
+      padding: 2px 8px; border-radius: 20px; background: white; opacity: 0.3;
     }
     .score-grid { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; font-size: 0;  /* 新增：使文本节点字号为0，不可见 */
 }
@@ -96,7 +96,7 @@
       display: flex; flex-direction: column; align-items: center; background: white;
       border-radius: 8px;   padding-top: 2px; padding-left: 2px; padding-right: 2px; padding-bottom: 0px; min-width: 55px; border: 0px solid #e9eef2; /* 评委和分框 */
     }
-    .judge-label { font-size: 0.65rem; color: #6b7280; margin-bottom: -4px; white-space: nowrap; }
+    .judge-label { font-size: 0.65rem; color: #6b7280; margin-bottom: -8px; white-space: nowrap; }
     .judge-item input {
       width: 54px; padding: 6px 1px; text-align: center; border: none;
       background: transparent; font-weight: 600; font-size: 1rem; outline: none;
@@ -158,9 +158,9 @@
   <!-- 详情页 -->
   <div id="detailPage" class="page">
     <div class="detail-header">
-      <button class="back-btn" id="backToMainBtn">←</button>
+      <button class="back-btn" id="backToMainBtn"style="padding-bottom: 0px;">←</button>
       <div class="round-title">
-        <input type="text" id="detailRoundNameInput" placeholder="轮次名称">
+        <input type="text" id="detailRoundNameInput" placeholder="轮次名称" style="padding-bottom: 0px;">
       </div>
       <button class="manage-btn" id="openManagePanelBtn">⚙️</button>
     </div>

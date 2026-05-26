@@ -94,13 +94,13 @@
     .judges-inputs { display: flex; flex-wrap: wrap; gap: 6px; }
     .judge-item {
       display: flex; flex-direction: column; align-items: center; background: white;
-      border-radius: 10px; padding: 4px 2px; min-width: 55px; border: 1px solid #e9eef2;
+      border-radius: 10px;   padding-top: 2px; padding-left: 2px; padding-right: 2px; padding-bottom: 0px; min-width: 55px; border: 1px solid #e9eef2; /* 评委和分框 */
     }
     .judge-label { font-size: 0.65rem; color: #6b7280; margin-bottom: -1px; white-space: nowrap; }
     .judge-item input {
-      width: 54px; padding: 2px 1px; text-align: center; border: none;
+      width: 54px; padding: 4px 1px; text-align: center; border: none;
       background: transparent; font-weight: 600; font-size: 0.9rem; outline: none;
-      border-radius: 10px;
+      border-radius: 10px; /* 分输入框 */
     }
     .judge-item input:focus { background: #eef2ff; }
     .avg-badge {

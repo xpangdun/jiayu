@@ -134,6 +134,7 @@
     .input-group label { font-size:0.8rem; font-weight:600; color:#4b5563; }
     .input-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     .input-row input { flex:1; padding:10px 4px; text-align: center; border:1px solid #e5e7eb; border-radius:8px; font-size:0.9rem; background:#f9fafb; outline:none; }
+    .round-name-input { border: none !important; background: #f9fafb; padding: 2px 2px; border-radius: 8px; outline: none; font-size:0.98rem; color:#575757; }    
     .player-edit-item {
       display:flex; align-items:center; gap:8px; background:#f3f4f6; padding:8px 10px; border-radius:14px; margin-bottom:6px;
     }
@@ -193,8 +194,7 @@
       <div class="modal-handle"></div>
       <h3 style="font-weight:650;">⚙️ 轮次与选手管理</h3>
       <div class="input-group">
-        <label>轮次名称</label>
-        <input type="text" id="modalRoundName" placeholder="例如：半决赛">
+        <input type="text" id="modalRoundName" placeholder="例如：半决赛" class="round-name-input">
       </div>
       <div class="input-group">
         <label>👤 评委姓名 (5位)</label>

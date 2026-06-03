@@ -149,7 +149,6 @@
     }  /* 拖拽排序样式 */
     .player-edit-item:active { cursor: grabbing; }
      .player-edit-item.dragging { opacity: 0.4; }
-    .player-edit-item.drag-over { border-top: 2px solid #1e2b4f; background: #eef2ff; }
     .drag-handle { cursor: grab; font-size: 1.2rem; color: #9ca3af; user-select: none; -webkit-touch-callout: none;  /* 禁止长按菜单 */ 
                   width: 28px; text-align: center; touch-action: none;  /* 禁止触屏滚动/缩放干扰 */ }
     .drag-handle:active { cursor: grabbing; }
@@ -489,26 +488,14 @@
     // 拖拽排序核心函数
     function initDragAndDrop(round) {
   const container = playersEditList;
-  let dragItem = null;           // 当前拖拽的 DOM 元素
-  let dragIndex = -1;            // 拖拽项的原始索引
-  let cloneNode = null;          // 拖拽时的克隆元素（跟随手指）
-  let startY = 0;                // 触摸起始 Y 坐标
-  let currentTargetIndex = -1;   // 当前要插入的位置索引
-  let indicator = null;          // 蓝色指示条
+  let dragItem = null;
+  let dragIndex = -1;
+  let cloneNode = null;
+  let startY = 0;
+  let currentTargetIndex = -1;
+  let indicator = null;
 
-  // 创建或移除指示条
-  function createIndicator() {
-    if (!indicator) {
-      indicator = document.createElement('div');
-      indicator.className = 'drag-indicator';
-      indicator.style.height = '4px';
-      indicator.style.backgroundColor = '#3b82f6';
-      indicator.style.borderRadius = '2px';
-      indicator.style.margin = '8px 0';
-      indicator.style.transition = 'all 0.1s';
-      container.appendChild(indicator);
-    }
-  }
+  // 移除指示条
   function removeIndicator() {
     if (indicator && indicator.parentNode) indicator.remove();
     indicator = null;
@@ -528,9 +515,21 @@
 
   // 更新指示条位置（插入到第 index 个元素之前）
   function updateIndicator(index) {
-    createIndicator();
+    // 先移除旧的指示条
+    if (indicator && indicator.parentNode) indicator.remove();
+    
     const items = [...container.querySelectorAll('.player-edit-item')];
     if (items.length === 0) return;
+    
+    // 创建新指示条
+    indicator = document.createElement('div');
+    indicator.className = 'drag-indicator';
+    indicator.style.height = '4px';
+    indicator.style.backgroundColor = '#3b82f6';
+    indicator.style.borderRadius = '2px';
+    indicator.style.margin = '8px 0';
+    indicator.style.transition = 'all 0.1s';
+    
     if (index === 0) {
       container.insertBefore(indicator, items[0]);
     } else if (index >= items.length) {
@@ -569,13 +568,12 @@
   function onTouchStart(e) {
     const handle = e.target.closest('.drag-handle');
     if (!handle) return;
-    e.preventDefault();  // 阻止滚动和选中
+    e.preventDefault();
     dragItem = e.target.closest('.player-edit-item');
     if (!dragItem) return;
     dragIndex = parseInt(dragItem.dataset.index);
     startY = e.touches[0].clientY;
 
-    // 创建克隆体
     cloneNode = createClone(dragItem, startY);
     dragItem.style.opacity = '0.4';
   }
@@ -586,9 +584,8 @@
     e.preventDefault();
     const currentY = e.touches[0].clientY;
     moveClone(cloneNode, currentY, startY);
-    startY = currentY; // 更新起始位置用于下一次移动
+    startY = currentY;
 
-    // 计算当前应该插入的位置
     const targetIndex = getTargetIndex(currentY);
     if (targetIndex !== currentTargetIndex) {
       currentTargetIndex = targetIndex;
@@ -607,7 +604,6 @@
     let finalIndex = currentTargetIndex;
     if (finalIndex === -1) finalIndex = dragIndex;
 
-    // 如果拖拽项在原位置之后，插入索引需要减1
     if (dragIndex < finalIndex) finalIndex--;
 
     if (finalIndex !== dragIndex && finalIndex >= 0 && finalIndex <= round.players.length) {
@@ -617,7 +613,6 @@
       round.players = players;
       renderPlayerEditList(round);
     } else {
-      // 没有变化也需要重新渲染清除高亮
       renderPlayerEditList(round);
     }
     cleanup();

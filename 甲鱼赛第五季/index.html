@@ -490,14 +490,22 @@
   const container = playersEditList;
   let dragItem = null;
   let dragIndex = -1;
-  let cloneNode = null;
   let startY = 0;
   let currentTargetIndex = -1;
   let indicator = null;
+  let isDragging = false;
+  let rafId = null;
 
   // 移除指示条
   function removeIndicator() {
     if (indicator && indicator.parentNode) indicator.remove();
+    indicator = null;
+  }
+
+  // 移除所有指示条（兜底）
+  function removeAllIndicators() {
+    const indicators = container.querySelectorAll('.drag-indicator');
+    indicators.forEach(el => el.remove());
     indicator = null;
   }
 
@@ -513,56 +521,32 @@
     return items.length;
   }
 
-  // 更新指示条位置（插入到第 index 个元素之前）
-  function updateIndicator(index) {
-  // 移除所有现有指示条（通过类名查找）
-  const existingIndicators = container.querySelectorAll('.drag-indicator');
-  existingIndicators.forEach(el => el.remove());
-  
-  const items = [...container.querySelectorAll('.player-edit-item')];
-  if (items.length === 0) return;
-  
-  // 创建新指示条
-  indicator = document.createElement('div');
-  indicator.className = 'drag-indicator';
-  indicator.style.height = '4px';
-  indicator.style.backgroundColor = '#3b82f6';
-  indicator.style.borderRadius = '2px';
-  indicator.style.margin = '8px 0';
-  indicator.style.transition = 'all 0.1s';
-  
-  if (index === 0) {
-    container.insertBefore(indicator, items[0]);
-  } else if (index >= items.length) {
-    container.appendChild(indicator);
-  } else {
-    container.insertBefore(indicator, items[index]);
-  }
-}
-
-  // 创建跟随手指的克隆元素
-  function createClone(item, touchY) {
-    const rect = item.getBoundingClientRect();
-    const clone = item.cloneNode(true);
-    clone.style.position = 'fixed';
-    clone.style.top = rect.top + 'px';
-    clone.style.left = rect.left + 'px';
-    clone.style.width = rect.width + 'px';
-    clone.style.opacity = '0.8';
-    clone.style.zIndex = '9999';
-    clone.style.pointerEvents = 'none';
-    clone.style.transition = 'none';
-    clone.classList.add('dragging-clone');
-    document.body.appendChild(clone);
-    return clone;
-  }
-
-  // 移动克隆元素
-  function moveClone(clone, touchY, startY) {
-    if (!clone) return;
-    const deltaY = touchY - startY;
-    const currentTop = parseFloat(clone.style.top);
-    clone.style.top = (currentTop + deltaY) + 'px';
+  // 更新指示条位置（节流）
+  function updateIndicatorThrottled(index) {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      // 移除现有指示条
+      if (indicator) removeIndicator();
+      const items = [...container.querySelectorAll('.player-edit-item')];
+      if (items.length === 0) return;
+      
+      indicator = document.createElement('div');
+      indicator.className = 'drag-indicator';
+      indicator.style.height = '4px';
+      indicator.style.backgroundColor = '#3b82f6';
+      indicator.style.borderRadius = '2px';
+      indicator.style.margin = '8px 0';
+      indicator.style.transition = 'all 0.1s';
+      
+      if (index === 0) {
+        container.insertBefore(indicator, items[0]);
+      } else if (index >= items.length) {
+        container.appendChild(indicator);
+      } else {
+        container.insertBefore(indicator, items[index]);
+      }
+      rafId = null;
+    });
   }
 
   // 开始拖拽
@@ -574,39 +558,40 @@
     if (!dragItem) return;
     dragIndex = parseInt(dragItem.dataset.index);
     startY = e.touches[0].clientY;
-
-    cloneNode = createClone(dragItem, startY);
+    isDragging = true;
     dragItem.style.opacity = '0.4';
+    // 移除所有残留指示条
+    removeAllIndicators();
   }
 
   // 拖拽移动中
   function onTouchMove(e) {
-    if (!dragItem || !cloneNode) return;
+    if (!isDragging || !dragItem) return;
     e.preventDefault();
     const currentY = e.touches[0].clientY;
-    moveClone(cloneNode, currentY, startY);
-    startY = currentY;
-
     const targetIndex = getTargetIndex(currentY);
     if (targetIndex !== currentTargetIndex) {
       currentTargetIndex = targetIndex;
-      updateIndicator(currentTargetIndex);
+      updateIndicatorThrottled(currentTargetIndex);
     }
   }
 
   // 结束拖拽
   function onTouchEnd(e) {
-    if (!dragItem) {
+    if (!isDragging) {
       cleanup();
       return;
     }
     e.preventDefault();
-
+    
     let finalIndex = currentTargetIndex;
     if (finalIndex === -1) finalIndex = dragIndex;
-
+    
+    // 调整索引
     if (dragIndex < finalIndex) finalIndex--;
-
+    if (finalIndex < 0) finalIndex = 0;
+    if (finalIndex > round.players.length) finalIndex = round.players.length;
+    
     if (finalIndex !== dragIndex && finalIndex >= 0 && finalIndex <= round.players.length) {
       const players = [...round.players];
       const [moved] = players.splice(dragIndex, 1);
@@ -614,26 +599,24 @@
       round.players = players;
       renderPlayerEditList(round);
     } else {
+      // 没有移动，只需刷新清除高亮
       renderPlayerEditList(round);
     }
     cleanup();
   }
 
   function cleanup() {
-  if (dragItem) dragItem.style.opacity = '';
-  if (cloneNode && cloneNode.parentNode) cloneNode.remove();
-  cloneNode = null;
-  dragItem = null;
-  dragIndex = -1;
-  currentTargetIndex = -1;
-  
-  // 移除所有指示条
-  const indicators = container.querySelectorAll('.drag-indicator');
-  indicators.forEach(el => el.remove());
-  indicator = null;
-}
+    if (dragItem) dragItem.style.opacity = '';
+    dragItem = null;
+    dragIndex = -1;
+    currentTargetIndex = -1;
+    isDragging = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+    removeAllIndicators();
+  }
 
-  // 绑定容器上的触摸事件
+  // 确保事件只绑定一次，先解绑再绑定
   container.removeEventListener('touchstart', onTouchStart);
   container.removeEventListener('touchmove', onTouchMove);
   container.removeEventListener('touchend', onTouchEnd);

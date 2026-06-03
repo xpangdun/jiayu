@@ -153,6 +153,9 @@
     .drag-handle { cursor: grab; font-size: 1.2rem; color: #9ca3af; user-select: none; width: 28px; text-align: center; }
     .drag-handle:active { cursor: grabbing; }
     .player-edit-item input { border:1px solid #e5e7eb; border-radius:8px; padding:6px 10px; width:70px; background:white; font-size:0.9rem }
+    .player-edit-item.drag-gap {margin-bottom: 48px;transition: margin 0.1s ease;} /* 增加拖动间距 */
+    .player-edit-item.drag-gap-top { margin-top: 48px;transition: margin 0.1s ease;}
+    .drag-indicator {height: 4px;background: #3b82f6;border-radius: 2px;margin: 4px 0;transition: all 0.1s ease;}/* 拖拽指示条 */
         .player-edit-item .edit-player-name {flex: 1;} /* 这个新增的有用吗 */
     .flex-row { display:flex; justify-content:space-between; align-items:center; }
   </style>
@@ -484,63 +487,141 @@
 
     // 拖拽排序核心函数
     function initDragAndDrop(round) {
-      const items = playersEditList.querySelectorAll('.player-edit-item');
-      let dragSrc = null;
-      
-      function handleDragStart(e) {
-        dragSrc = this;
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/html', this.innerHTML);
-        this.classList.add('dragging');
-      }
-      
-      function handleDragOver(e) {
-        if (e.preventDefault) {
-          e.preventDefault();
-        }
-        e.dataTransfer.dropEffect = 'move';
-        return false;
-      }
-      
-      function handleDragEnter(e) {
-        if (this !== dragSrc) {
-          this.classList.add('drag-over');
-        }
-      }
-      
-      function handleDragEnd(e) {
-        items.forEach(item => {
-          item.classList.remove('dragging');
-          item.classList.remove('drag-over');
-        });
-        dragSrc = null;
-      }
-      
-      function handleDrop(e) {
-        e.stopPropagation();
-        if (dragSrc !== this) {
-          const dragIndex = parseInt(dragSrc.dataset.index);
-          const dropIndex = parseInt(this.dataset.index);
-          
-          const players = [...round.players];
-          const [movedPlayer] = players.splice(dragIndex, 1);
-          players.splice(dropIndex, 0, movedPlayer);
-          round.players = players;
-          
-          renderPlayerEditList(round);
-        }
-        return false;
-      }
-      
-      items.forEach(item => {
-        item.setAttribute('draggable', 'true');
-        item.addEventListener('dragstart', handleDragStart);
-        item.addEventListener('dragover', handleDragOver);
-        item.addEventListener('dragenter', handleDragEnter);
-        item.addEventListener('dragend', handleDragEnd);
-        item.addEventListener('drop', handleDrop);
-      });
+  const container = playersEditList;
+  let dragSrc = null;
+  let dragSrcIndex = -1;
+  let targetIndex = -1;
+  let insertPosition = 'below'; // 'above' or 'below'
+
+  function removeAllGaps() {
+    document.querySelectorAll('.player-edit-item.drag-gap').forEach(el => {
+      el.classList.remove('drag-gap');
+    });
+  }
+
+  function handleDragStart(e) {
+    dragSrc = this;
+    dragSrcIndex = parseInt(this.dataset.index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+    this.classList.add('dragging');
+    // 设置拖拽图标透明
+    e.dataTransfer.setDragImage(new Image(), 0, 0);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (!dragSrc) return;
+
+    const target = this;
+    if (target === dragSrc) {
+      removeAllGaps();
+      return;
     }
+
+    const rect = target.getBoundingClientRect();
+    const mouseY = e.clientY;
+    const isAbove = mouseY < rect.top + rect.height / 2;
+
+    // 确定目标位置索引
+    let targetIdx = parseInt(target.dataset.index);
+    let newInsertPosition = isAbove ? 'above' : 'below';
+    
+    // 如果鼠标位置与之前不同，清除所有间隙并重新设置
+    if (targetIndex !== targetIdx || insertPosition !== newInsertPosition) {
+      removeAllGaps();
+      targetIndex = targetIdx;
+      insertPosition = newInsertPosition;
+      
+      // 在目标元素上添加间隙样式
+      if (insertPosition === 'below') {
+        target.classList.add('drag-gap');
+      } else {
+        // 对于 above，给上一个元素加间隙，如果没有上一个则给目标自己加一个上边距样式
+        const prev = target.previousElementSibling;
+        if (prev) {
+          prev.classList.add('drag-gap');
+        } else {
+          // 第一个元素的上方：在容器顶部显示一个占位间隙（用伪类或额外元素，这里简单处理在第一个元素上加特殊类）
+          target.classList.add('drag-gap-top');
+        }
+      }
+    }
+  }
+
+  function handleDragEnter(e) {
+    // 留空，不需要额外处理
+  }
+
+  function handleDragLeave(e) {
+    // 如果离开的是当前高亮的目标，清除间隙，但不立刻清除记录，避免闪烁
+    if (this === document.querySelector('.player-edit-item.drag-gap')) {
+      removeAllGaps();
+      targetIndex = -1;
+    }
+  }
+
+  function handleDragEnd(e) {
+    removeAllGaps();
+    document.querySelectorAll('.player-edit-item.drag-gap-top').forEach(el => {
+      el.classList.remove('drag-gap-top');
+    });
+    if (dragSrc) dragSrc.classList.remove('dragging');
+    dragSrc = null;
+    dragSrcIndex = -1;
+    targetIndex = -1;
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!dragSrc) return;
+
+    // 计算最终插入索引
+    let finalIndex = targetIndex;
+    if (insertPosition === 'below') {
+      finalIndex = targetIndex + 1;
+    } else {
+      finalIndex = targetIndex;
+    }
+    // 如果拖动项在目标项之前，插入后索引会变化
+    if (dragSrcIndex < finalIndex) {
+      finalIndex--;
+    }
+    // 边界处理
+    if (finalIndex < 0) finalIndex = 0;
+    if (finalIndex > round.players.length) finalIndex = round.players.length;
+
+    if (finalIndex !== dragSrcIndex) {
+      const players = [...round.players];
+      const [movedPlayer] = players.splice(dragSrcIndex, 1);
+      players.splice(finalIndex, 0, movedPlayer);
+      round.players = players;
+      renderPlayerEditList(round);
+    }
+
+    handleDragEnd();
+  }
+
+  // 重新绑定事件，每次重新渲染后调用
+  const items = container.querySelectorAll('.player-edit-item');
+  items.forEach(item => {
+    item.setAttribute('draggable', 'true');
+    item.removeEventListener('dragstart', handleDragStart);
+    item.removeEventListener('dragover', handleDragOver);
+    item.removeEventListener('dragenter', handleDragEnter);
+    item.removeEventListener('dragleave', handleDragLeave);
+    item.removeEventListener('dragend', handleDragEnd);
+    item.removeEventListener('drop', handleDrop);
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragover', handleDragOver);
+    item.addEventListener('dragenter', handleDragEnter);
+    item.addEventListener('dragleave', handleDragLeave);
+    item.addEventListener('dragend', handleDragEnd);
+    item.addEventListener('drop', handleDrop);
+  });
+}
 
     function renderPlayerEditList(round) {
       playersEditList.innerHTML = round.players.map((p, index) => `

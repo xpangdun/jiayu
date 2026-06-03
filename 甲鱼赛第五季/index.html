@@ -145,9 +145,15 @@
     .input-row input { flex:1; padding:10px 4px; text-align: center; border:1px solid #e5e7eb; border-radius:8px; font-size:0.9rem; background:#f9fafb; outline:none; }
     .round-name-input { border: none !important; background: #f9fafb; padding: 2px 8px; border-radius: 8px; outline: none; font-size:0.98rem; color:#575757; }
     .player-edit-item {
-      display:flex; align-items:center; gap:8px; background:#f3f4f6; padding:6px 10px; border-radius:14px; margin-bottom:6px;
-    }
+      display:flex; align-items:center; gap:8px; background:#f3f4f6; padding:6px 10px; border-radius:14px; margin-bottom:6px;transition: all 0.2s ease;
+    }  /* 拖拽排序样式 */
+    .player-edit-item:active { cursor: grabbing; }
+     .player-edit-item.dragging { opacity: 0.4; }
+    .player-edit-item.drag-over { border-top: 2px solid #1e2b4f; background: #eef2ff; }
+    .drag-handle { cursor: grab; font-size: 1.2rem; color: #9ca3af; user-select: none; width: 28px; text-align: center; }
+    .drag-handle:active { cursor: grabbing; }
     .player-edit-item input { border:1px solid #e5e7eb; border-radius:8px; padding:6px 10px; width:70px; background:white; font-size:0.9rem }
+        .player-edit-item .edit-player-name {flex: 1;} /* 这个新增的有用吗 */
     .flex-row { display:flex; justify-content:space-between; align-items:center; }
   </style>
 </head>
@@ -467,7 +473,7 @@
     toggleJudgesBtn.addEventListener('click', () => {
       showRealJudgeNames = !showRealJudgeNames;
       toggleJudgesBtn.textContent = showRealJudgeNames ? '👁️' : '👁️‍🗨️';
-      renderScores(); // 重新渲染以更新标签
+      renderScores();
     });
 
     // 轮次名实时改
@@ -475,6 +481,86 @@
       const round = getCurrentRound();
       if (round) { round.name = detailRoundNameInput.value; saveData(); }
     });
+
+    // 拖拽排序核心函数
+    function initDragAndDrop(round) {
+      const items = playersEditList.querySelectorAll('.player-edit-item');
+      let dragSrc = null;
+      
+      function handleDragStart(e) {
+        dragSrc = this;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.innerHTML);
+        this.classList.add('dragging');
+      }
+      
+      function handleDragOver(e) {
+        if (e.preventDefault) {
+          e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+      }
+      
+      function handleDragEnter(e) {
+        if (this !== dragSrc) {
+          this.classList.add('drag-over');
+        }
+      }
+      
+      function handleDragEnd(e) {
+        items.forEach(item => {
+          item.classList.remove('dragging');
+          item.classList.remove('drag-over');
+        });
+        dragSrc = null;
+      }
+      
+      function handleDrop(e) {
+        e.stopPropagation();
+        if (dragSrc !== this) {
+          const dragIndex = parseInt(dragSrc.dataset.index);
+          const dropIndex = parseInt(this.dataset.index);
+          
+          const players = [...round.players];
+          const [movedPlayer] = players.splice(dragIndex, 1);
+          players.splice(dropIndex, 0, movedPlayer);
+          round.players = players;
+          
+          renderPlayerEditList(round);
+        }
+        return false;
+      }
+      
+      items.forEach(item => {
+        item.setAttribute('draggable', 'true');
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('dragenter', handleDragEnter);
+        item.addEventListener('dragend', handleDragEnd);
+        item.addEventListener('drop', handleDrop);
+      });
+    }
+
+    function renderPlayerEditList(round) {
+      playersEditList.innerHTML = round.players.map((p, index) => `
+        <div class="player-edit-item" data-player-id="${p.id}" data-index="${index}">
+          <span class="drag-handle">⋮⋮</span>
+          <input type="text" value="${p.id}" class="edit-player-id" style="width:60px;">
+          <input type="text" value="${p.name}" class="edit-player-name" style="flex:1;">
+          <button class="btn-sm btn-outline remove-player-btn" data-id="${p.id}">删除</button>
+        </div>
+      `).join('');
+
+      // 添加拖拽排序功能
+      initDragAndDrop(round); 
+      
+      document.querySelectorAll('.remove-player-btn').forEach(b => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        round.players = round.players.filter(p => p.id !== b.dataset.id);
+        renderPlayerEditList(round);
+      }));
+    }
 
     // 管理面板
     function openManage() {
@@ -485,30 +571,20 @@
       renderPlayerEditList(round);
       manageModal.classList.add('active');
     }
-    function renderPlayerEditList(round) {
-      playersEditList.innerHTML = round.players.map(p => `
-        <div class="player-edit-item" data-player-id="${p.id}">
-          <input type="text" value="${p.id}" class="edit-player-id" style="width:60px;">
-          <input type="text" value="${p.name}" class="edit-player-name" style="flex:1;">
-          <button class="btn-sm btn-outline remove-player-btn" data-id="${p.id}">删除</button>
-        </div>
-      `).join('');
-      document.querySelectorAll('.remove-player-btn').forEach(b => b.addEventListener('click', () => {
-        round.players = round.players.filter(p => p.id !== b.dataset.id);
-        renderPlayerEditList(round);
-      }));
-    }
+
     document.getElementById('addPlayerInModalBtn').addEventListener('click', () => {
       const round = getCurrentRound();
       if (!round) return;
       round.players.push({ id: `P${round.players.length+1}`, name: '新选手', scores: new Array(JUDGES_COUNT).fill(null) });
       renderPlayerEditList(round);
     });
+    
     document.getElementById('saveManageBtn').addEventListener('click', () => {
       const round = getCurrentRound();
       if (!round) return;
       round.name = modalRoundName.value.trim() || round.name;
       document.querySelectorAll('.judge-name-input').forEach((inp, i) => { if(i<JUDGES_COUNT) round.judges[i] = inp.value.trim() || `评委${i+1}`; });
+      
       const items = document.querySelectorAll('.player-edit-item');
       const newPlayers = [];
       items.forEach(item => {
@@ -524,9 +600,11 @@
       round.players = newPlayers;
       saveData();
       detailRoundNameInput.value = round.name;
-      renderScores(); renderRanking();
+      renderScores(); 
+      renderRanking();
       manageModal.classList.remove('active');
     });
+    
     document.getElementById('closeManageBtn').addEventListener('click', () => manageModal.classList.remove('active'));
     document.getElementById('openManagePanelBtn').addEventListener('click', openManage);
     manageModal.addEventListener('click', e => { if(e.target === manageModal) manageModal.classList.remove('active'); });
@@ -540,7 +618,8 @@
         judges: Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`),
         players: []
       });
-      saveData(); renderRoundList();
+      saveData(); 
+      renderRoundList();
     });
 
     loadData();
@@ -549,3 +628,10 @@
 </script>
 </body>
 </html>
+
+
+
+
+
+
+

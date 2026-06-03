@@ -145,18 +145,10 @@
     .input-row input { flex:1; padding:10px 4px; text-align: center; border:1px solid #e5e7eb; border-radius:8px; font-size:0.9rem; background:#f9fafb; outline:none; }
     .round-name-input { border: none !important; background: #f9fafb; padding: 2px 8px; border-radius: 8px; outline: none; font-size:0.98rem; color:#575757; }
     .player-edit-item {
-      display:flex; align-items:center; gap:8px; background:#f3f4f6; padding:6px 10px; border-radius:14px; margin-bottom:6px;transition: all 0.2s ease;
-    }  /* 拖拽排序样式 */
-    .player-edit-item:active { cursor: grabbing; }
-     .player-edit-item.dragging { opacity: 0.4; }
-    .drag-handle { cursor: grab; font-size: 1.2rem; color: #9ca3af; user-select: none; -webkit-touch-callout: none;  /* 禁止长按菜单 */ 
-                  width: 28px; text-align: center; touch-action: none;  /* 禁止触屏滚动/缩放干扰 */ }
-    .drag-handle:active { cursor: grabbing; }
+      display:flex; align-items:center; gap:8px; background:#f3f4f6; padding:6px 10px; border-radius:14px; margin-bottom:6px;} 
     .player-edit-item input { border:1px solid #e5e7eb; border-radius:8px; padding:6px 10px; width:70px; background:white; font-size:0.9rem }
-    .player-edit-item.drag-gap {margin-bottom: 48px;transition: margin 0.1s ease;} /* 增加拖动间距 */
-    .player-edit-item.drag-gap-top { margin-top: 48px;transition: margin 0.1s ease;}
-    .drag-indicator {height: 4px;background: #3b82f6;border-radius: 2px;margin: 4px 0;transition: all 0.1s ease;}/* 拖拽指示条 */
-        .player-edit-item .edit-player-name {flex: 1;} /* 这个新增的有用吗 */
+    .move-up-btn, .move-down-btn { background: #f0f2f5; border: none; font-size: 1rem; padding: 4px 8px; border-radius: 20px; cursor: pointer; }
+    .move-up-btn:disabled, .move-down-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .flex-row { display:flex; justify-content:space-between; align-items:center; }
   </style>
 </head>
@@ -485,165 +477,52 @@
       if (round) { round.name = detailRoundNameInput.value; saveData(); }
     });
 
-    // 拖拽排序核心函数
-    function initDragAndDrop(round) {
-  const container = playersEditList;
-  let dragItem = null;
-  let dragIndex = -1;
-  let startY = 0;
-  let currentTargetIndex = -1;
-  let indicator = null;
-  let isDragging = false;
-  let rafId = null;
-
-  // 移除指示条
-  function removeIndicator() {
-    if (indicator && indicator.parentNode) indicator.remove();
-    indicator = null;
-  }
-
-  // 移除所有指示条（兜底）
-  function removeAllIndicators() {
-    const indicators = container.querySelectorAll('.drag-indicator');
-    indicators.forEach(el => el.remove());
-    indicator = null;
-  }
-
-  // 根据手指位置计算应该插入的索引
-  function getTargetIndex(clientY) {
-    const items = [...container.querySelectorAll('.player-edit-item')];
-    if (items.length === 0) return 0;
-    for (let i = 0; i < items.length; i++) {
-      const rect = items[i].getBoundingClientRect();
-      const middle = rect.top + rect.height / 2;
-      if (clientY < middle) return i;
-    }
-    return items.length;
-  }
-
-  // 更新指示条位置（节流）
-  function updateIndicatorThrottled(index) {
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(() => {
-      // 移除现有指示条
-      if (indicator) removeIndicator();
-      const items = [...container.querySelectorAll('.player-edit-item')];
-      if (items.length === 0) return;
-      
-      indicator = document.createElement('div');
-      indicator.className = 'drag-indicator';
-      indicator.style.height = '4px';
-      indicator.style.backgroundColor = '#3b82f6';
-      indicator.style.borderRadius = '2px';
-      indicator.style.margin = '8px 0';
-      indicator.style.transition = 'all 0.1s';
-      
-      if (index === 0) {
-        container.insertBefore(indicator, items[0]);
-      } else if (index >= items.length) {
-        container.appendChild(indicator);
-      } else {
-        container.insertBefore(indicator, items[index]);
-      }
-      rafId = null;
-    });
-  }
-
-  // 开始拖拽
-  function onTouchStart(e) {
-    const handle = e.target.closest('.drag-handle');
-    if (!handle) return;
-    e.preventDefault();
-    dragItem = e.target.closest('.player-edit-item');
-    if (!dragItem) return;
-    dragIndex = parseInt(dragItem.dataset.index);
-    startY = e.touches[0].clientY;
-    isDragging = true;
-    dragItem.style.opacity = '0.4';
-    // 移除所有残留指示条
-    removeAllIndicators();
-  }
-
-  // 拖拽移动中
-  function onTouchMove(e) {
-    if (!isDragging || !dragItem) return;
-    e.preventDefault();
-    const currentY = e.touches[0].clientY;
-    const targetIndex = getTargetIndex(currentY);
-    if (targetIndex !== currentTargetIndex) {
-      currentTargetIndex = targetIndex;
-      updateIndicatorThrottled(currentTargetIndex);
-    }
-  }
-
-  // 结束拖拽
-  function onTouchEnd(e) {
-    if (!isDragging) {
-      cleanup();
-      return;
-    }
-    e.preventDefault();
     
-    let finalIndex = currentTargetIndex;
-    if (finalIndex === -1) finalIndex = dragIndex;
-    
-    // 调整索引
-    if (dragIndex < finalIndex) finalIndex--;
-    if (finalIndex < 0) finalIndex = 0;
-    if (finalIndex > round.players.length) finalIndex = round.players.length;
-    
-    if (finalIndex !== dragIndex && finalIndex >= 0 && finalIndex <= round.players.length) {
-      const players = [...round.players];
-      const [moved] = players.splice(dragIndex, 1);
-      players.splice(finalIndex, 0, moved);
-      round.players = players;
-      renderPlayerEditList(round);
-    } else {
-      // 没有移动，只需刷新清除高亮
-      renderPlayerEditList(round);
-    }
-    cleanup();
-  }
-
-  function cleanup() {
-    if (dragItem) dragItem.style.opacity = '';
-    dragItem = null;
-    dragIndex = -1;
-    currentTargetIndex = -1;
-    isDragging = false;
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = null;
-    removeAllIndicators();
-  }
-
-  // 确保事件只绑定一次，先解绑再绑定
-  container.removeEventListener('touchstart', onTouchStart);
-  container.removeEventListener('touchmove', onTouchMove);
-  container.removeEventListener('touchend', onTouchEnd);
-  container.addEventListener('touchstart', onTouchStart, { passive: false });
-  container.addEventListener('touchmove', onTouchMove, { passive: false });
-  container.addEventListener('touchend', onTouchEnd);
-}
 
     function renderPlayerEditList(round) {
-      playersEditList.innerHTML = round.players.map((p, index) => `
-        <div class="player-edit-item" data-player-id="${p.id}" data-index="${index}">
-          <span class="drag-handle">⋮⋮</span>
-          <input type="text" value="${p.id}" class="edit-player-id" style="width:60px;">
-          <input type="text" value="${p.name}" class="edit-player-name" style="flex:1;">
-          <button class="btn-sm btn-outline remove-player-btn" data-id="${p.id}">删除</button>
-        </div>
-      `).join('');
+  playersEditList.innerHTML = round.players.map((p, index) => `
+    <div class="player-edit-item" data-player-id="${p.id}" data-index="${index}">
+      <input type="text" value="${p.id}" class="edit-player-id" style="width:60px;">
+      <input type="text" value="${p.name}" class="edit-player-name" style="flex:1;">
+      <button class="btn-sm btn-outline move-up-btn" data-index="${index}" ${index === 0 ? 'disabled' : ''}>▲</button>
+      <button class="btn-sm btn-outline move-down-btn" data-index="${index}" ${index === round.players.length-1 ? 'disabled' : ''}>▼</button>
+      <button class="btn-sm btn-outline remove-player-btn" data-id="${p.id}">删除</button>
+    </div>
+  `).join('');
 
-      // 添加拖拽排序功能
-      initDragAndDrop(round); 
-      
-      document.querySelectorAll('.remove-player-btn').forEach(b => b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        round.players = round.players.filter(p => p.id !== b.dataset.id);
-        renderPlayerEditList(round);
-      }));
-    }
+  // 上移
+  document.querySelectorAll('.move-up-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(btn.dataset.index);
+      if (idx <= 0) return;
+      const players = [...round.players];
+      [players[idx-1], players[idx]] = [players[idx], players[idx-1]];
+      round.players = players;
+      renderPlayerEditList(round);
+    });
+  });
+
+  // 下移
+  document.querySelectorAll('.move-down-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(btn.dataset.index);
+      if (idx >= round.players.length-1) return;
+      const players = [...round.players];
+      [players[idx], players[idx+1]] = [players[idx+1], players[idx]];
+      round.players = players;
+      renderPlayerEditList(round);
+    });
+  });
+
+  // 删除
+  document.querySelectorAll('.remove-player-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      round.players = round.players.filter(p => p.id !== btn.dataset.id);
+      renderPlayerEditList(round);
+    });
+  });
+}
 
     // 管理面板
     function openManage() {

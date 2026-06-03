@@ -515,29 +515,30 @@
 
   // 更新指示条位置（插入到第 index 个元素之前）
   function updateIndicator(index) {
-    // 先移除旧的指示条
-    if (indicator && indicator.parentNode) indicator.remove();
-    
-    const items = [...container.querySelectorAll('.player-edit-item')];
-    if (items.length === 0) return;
-    
-    // 创建新指示条
-    indicator = document.createElement('div');
-    indicator.className = 'drag-indicator';
-    indicator.style.height = '4px';
-    indicator.style.backgroundColor = '#3b82f6';
-    indicator.style.borderRadius = '2px';
-    indicator.style.margin = '8px 0';
-    indicator.style.transition = 'all 0.1s';
-    
-    if (index === 0) {
-      container.insertBefore(indicator, items[0]);
-    } else if (index >= items.length) {
-      container.appendChild(indicator);
-    } else {
-      container.insertBefore(indicator, items[index]);
-    }
+  // 移除所有现有指示条（通过类名查找）
+  const existingIndicators = container.querySelectorAll('.drag-indicator');
+  existingIndicators.forEach(el => el.remove());
+  
+  const items = [...container.querySelectorAll('.player-edit-item')];
+  if (items.length === 0) return;
+  
+  // 创建新指示条
+  indicator = document.createElement('div');
+  indicator.className = 'drag-indicator';
+  indicator.style.height = '4px';
+  indicator.style.backgroundColor = '#3b82f6';
+  indicator.style.borderRadius = '2px';
+  indicator.style.margin = '8px 0';
+  indicator.style.transition = 'all 0.1s';
+  
+  if (index === 0) {
+    container.insertBefore(indicator, items[0]);
+  } else if (index >= items.length) {
+    container.appendChild(indicator);
+  } else {
+    container.insertBefore(indicator, items[index]);
   }
+}
 
   // 创建跟随手指的克隆元素
   function createClone(item, touchY) {
@@ -619,14 +620,18 @@
   }
 
   function cleanup() {
-    if (dragItem) dragItem.style.opacity = '';
-    if (cloneNode && cloneNode.parentNode) cloneNode.remove();
-    cloneNode = null;
-    dragItem = null;
-    dragIndex = -1;
-    currentTargetIndex = -1;
-    removeIndicator();
-  }
+  if (dragItem) dragItem.style.opacity = '';
+  if (cloneNode && cloneNode.parentNode) cloneNode.remove();
+  cloneNode = null;
+  dragItem = null;
+  dragIndex = -1;
+  currentTargetIndex = -1;
+  
+  // 移除所有指示条
+  const indicators = container.querySelectorAll('.drag-indicator');
+  indicators.forEach(el => el.remove());
+  indicator = null;
+}
 
   // 绑定容器上的触摸事件
   container.removeEventListener('touchstart', onTouchStart);

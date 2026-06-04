@@ -233,6 +233,8 @@
     let appData = { rounds: [] };
     let currentRoundId = null;
     let showRealJudgeNames = true; // 控制评委名称显示
+    let editingPlayers = [];   // 临时编辑的选手列表
+    let editingJudges = [];    // 临时评委列表
 
     // DOM元素
     const mainPage = document.getElementById('mainPage');
@@ -479,13 +481,13 @@
 
     
 
-    function renderPlayerEditList(round) {
-  playersEditList.innerHTML = round.players.map((p, index) => `
+    function renderPlayerEditList() {
+  playersEditList.innerHTML = editingPlayers.map((p, index) => `
     <div class="player-edit-item" data-player-id="${p.id}" data-index="${index}">
       <input type="text" value="${p.id}" class="edit-player-id" style="width:60px;">
       <input type="text" value="${p.name}" class="edit-player-name" style="flex:1;">
       <button class="btn-sm btn-outline move-up-btn" data-index="${index}" ${index === 0 ? 'disabled' : ''}>▲</button>
-      <button class="btn-sm btn-outline move-down-btn" data-index="${index}" ${index === round.players.length-1 ? 'disabled' : ''}>▼</button>
+      <button class="btn-sm btn-outline move-down-btn" data-index="${index}" ${index === editingPlayers.length-1 ? 'disabled' : ''}>▼</button>
       <button class="btn-sm btn-outline remove-player-btn" data-id="${p.id}">删除</button>
     </div>
   `).join('');
@@ -495,10 +497,8 @@
     btn.addEventListener('click', (e) => {
       const idx = parseInt(btn.dataset.index);
       if (idx <= 0) return;
-      const players = [...round.players];
-      [players[idx-1], players[idx]] = [players[idx], players[idx-1]];
-      round.players = players;
-      renderPlayerEditList(round);
+      [editingPlayers[idx-1], editingPlayers[idx]] = [editingPlayers[idx], editingPlayers[idx-1]];
+      renderPlayerEditList();
     });
   });
 
@@ -506,11 +506,9 @@
   document.querySelectorAll('.move-down-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const idx = parseInt(btn.dataset.index);
-      if (idx >= round.players.length-1) return;
-      const players = [...round.players];
-      [players[idx], players[idx+1]] = [players[idx+1], players[idx]];
-      round.players = players;
-      renderPlayerEditList(round);
+      if (idx >= editingPlayers.length-1) return;
+      [editingPlayers[idx], editingPlayers[idx+1]] = [editingPlayers[idx+1], editingPlayers[idx]];
+      renderPlayerEditList();
     });
   });
 
@@ -518,56 +516,60 @@
   document.querySelectorAll('.remove-player-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      round.players = round.players.filter(p => p.id !== btn.dataset.id);
-      renderPlayerEditList(round);
+      editingPlayers = editingPlayers.filter(p => p.id !== btn.dataset.id);
+      renderPlayerEditList();
     });
   });
 }
 
     // 管理面板
     function openManage() {
-      const round = getCurrentRound();
-      if (!round) return;
-      modalRoundName.value = round.name;
-      judgesEditContainer.innerHTML = round.judges.map((n,i) => `<input type="text" value="${n}" data-judge-index="${i}" class="judge-name-input" style="width:40px;">`).join('');
-      renderPlayerEditList(round);
-      manageModal.classList.add('active');
-    }
+  const round = getCurrentRound();
+  if (!round) return;
+  // 深拷贝当前选手列表（作为临时编辑数据）
+  editingPlayers = JSON.parse(JSON.stringify(round.players));
+  editingJudges = [...round.judges]; // 评委也做临时副本
+  
+  modalRoundName.value = round.name;
+  judgesEditContainer.innerHTML = editingJudges.map((n,i) => `<input type="text" value="${n}" data-judge-index="${i}" class="judge-name-input" style="width:40px;">`).join('');
+  renderPlayerEditList(); // 不再传递 round，改用 editingPlayers
+  manageModal.classList.add('active');
+}
 
     document.getElementById('addPlayerInModalBtn').addEventListener('click', () => {
-      const round = getCurrentRound();
-      if (!round) return;
-      round.players.push({ id: `P${round.players.length+1}`, name: '新选手', scores: new Array(JUDGES_COUNT).fill(null) });
-      renderPlayerEditList(round);
-    });
+  const newId = `P${editingPlayers.length+1}`;
+  editingPlayers.push({ id: newId, name: '新选手', scores: new Array(JUDGES_COUNT).fill(null) });
+  renderPlayerEditList();
+});
     
     document.getElementById('saveManageBtn').addEventListener('click', () => {
-      const round = getCurrentRound();
-      if (!round) return;
-      round.name = modalRoundName.value.trim() || round.name;
-      document.querySelectorAll('.judge-name-input').forEach((inp, i) => { if(i<JUDGES_COUNT) round.judges[i] = inp.value.trim() || `评委${i+1}`; });
-      
-      const items = document.querySelectorAll('.player-edit-item');
-      const newPlayers = [];
-      items.forEach(item => {
-        const idInp = item.querySelector('.edit-player-id');
-        const nameInp = item.querySelector('.edit-player-name');
-        const existing = round.players.find(p => p.id === item.dataset.playerId);
-        if (existing) {
-          existing.id = idInp.value.trim() || existing.id;
-          existing.name = nameInp.value.trim() || existing.name;
-          newPlayers.push(existing);
-        }
-      });
-      round.players = newPlayers;
-      saveData();
-      detailRoundNameInput.value = round.name;
-      renderScores(); 
-      renderRanking();
-      manageModal.classList.remove('active');
-    });
+  const round = getCurrentRound();
+  if (!round) return;
+  
+  // 更新轮次名称
+  round.name = modalRoundName.value.trim() || round.name;
+  
+  // 更新评委（从临时评委读取）
+  document.querySelectorAll('.judge-name-input').forEach((inp, i) => {
+    if (i < JUDGES_COUNT) editingJudges[i] = inp.value.trim() || `评委${i+1}`;
+  });
+  round.judges = editingJudges;
+  
+  // 更新选手（使用编辑后的列表）
+  // 注意：需要保留每个选手原有的 scores，因为深拷贝时 scores 也复制了
+  round.players = editingPlayers;
+  
+  saveData();
+  detailRoundNameInput.value = round.name;
+  renderScores();
+  renderRanking();
+  manageModal.classList.remove('active');
+});
     
-    document.getElementById('closeManageBtn').addEventListener('click', () => manageModal.classList.remove('active'));
+    document.getElementById('closeManageBtn').addEventListener('click', () => {
+  manageModal.classList.remove('active');
+  // 不需要修改任何数据，直接丢弃 editingPlayers
+});
     document.getElementById('openManagePanelBtn').addEventListener('click', openManage);
     manageModal.addEventListener('click', e => { if(e.target === manageModal) manageModal.classList.remove('active'); });
 

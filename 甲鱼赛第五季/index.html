@@ -344,7 +344,6 @@
       <div style="font-weight:650; margin-bottom:8px;">🏆 实时排名</div>
       <div id="rankingContainer" class="ranking-list"></div>
     </div>
-    <!-- 新增：生成PK赛按钮 -->
     <button class="btn btn-primary" id="generatePkBtn" style="margin-top: 8px;">🎯 生成 PK 赛</button>
   </div>
 
@@ -400,7 +399,7 @@
 
     let appData = { rounds: [] };
     let currentRoundId = null;
-    let currentPkRoundId = null;   // 当前打开的PK赛轮次ID
+    let currentPkRoundId = null;
     let showRealJudgeNames = true;
 
     // DOM 元素
@@ -423,7 +422,6 @@
     const resetPkBtn = document.getElementById('resetPkBtn');
     const generateFinalFromPkBtn = document.getElementById('generateFinalFromPkBtn');
 
-    // 辅助函数
     function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,6); }
     function getRoundById(id) { return appData.rounds.find(r => r.id === id); }
     function getCurrentRound() { return currentRoundId ? getRoundById(currentRoundId) : null; }
@@ -466,9 +464,7 @@
                 if (!r.judges || r.judges.length !== JUDGES_COUNT) r.judges = Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`);
                 r.players.forEach(p => { if (!p.scores || p.scores.length !== JUDGES_COUNT) p.scores = new Array(JUDGES_COUNT).fill(null); });
               } else if (r.type === 'pk') {
-                // 确保 pkData 存在
                 if (!r.pkData) {
-                  // 兼容旧数据，若有则保持
                   r.pkData = { contestants: [], defenderIds: [], attackerIds: [], lockedStatus: [], challengedOpponent: [], scores: {} };
                 }
               }
@@ -491,12 +487,10 @@
       }
     }
 
-    // 获取轮次类型显示名称
     function getRoundTypeName(type) {
       return type === 'pk' ? 'PK赛' : '淘汰赛';
     }
 
-    // 渲染主页轮次列表（增加创建时间、类型标识）
     function renderRoundList() {
       if (!appData.rounds.length) {
         roundListContainer.innerHTML = '<div style="color:#9ca3af; padding:16px;">暂无轮次</div>';
@@ -537,7 +531,7 @@
       }));
     }
 
-    // ========== 普通淘汰赛相关函数（完全保留原有逻辑，未做任何改动）==========
+    // ========== 普通淘汰赛相关函数（完全保留） ==========
     function showMain() { mainPage.classList.add('active'); detailPage.classList.remove('active'); pkPage.classList.remove('active'); renderRoundList(); }
     function openDetail(roundId) {
       currentRoundId = roundId;
@@ -666,7 +660,6 @@
       const round = getCurrentRound();
       if (round) { round.name = detailRoundNameInput.value; saveData(); }
     });
-    // 管理面板相关（保持不变）
     function openManage() {
       const round = getCurrentRound();
       if (!round) return;
@@ -756,12 +749,12 @@
         newRound.players = [];
       } else {
         newRound.pkData = {
-          contestants: [],      // 8人列表
-          defenderIds: [],      // 当前备战席ID
-          attackerIds: [],      // 剩余攻擂者ID队列
-          lockedStatus: [],     // 每个攻擂者是否已完成
-          challengedOpponent: [], // 每个攻擂者选择的对手ID
-          scores: {}            // 选手ID -> pk分数
+          contestants: [],
+          defenderIds: [],
+          attackerIds: [],
+          lockedStatus: [],
+          challengedOpponent: [],
+          scores: {}
         };
       }
       appData.rounds.push(newRound);
@@ -769,14 +762,13 @@
       renderRoundList();
     });
 
-    // ========== 生成 PK 赛（从当前普通轮次） ==========
+    // ========== 生成 PK 赛（保存源轮次ID） ==========
     generatePkBtn.addEventListener('click', () => {
       const round = getCurrentRound();
       if (!round || round.type !== 'normal') {
         alert('请先打开一个普通淘汰赛轮次');
         return;
       }
-      // 计算初赛排名
       const playersWithAvg = round.players.map(p => ({
         ...p,
         avg: getPlayerAvg(p)
@@ -792,19 +784,18 @@
         alert('第3-10名选手不足8人');
         return;
       }
-      // 按初赛排名从低到高排序攻擂方（第10,9,8,7名）
-      const attackers = [...rank3to10].sort((a,b) => a.avg - b.avg).slice(0,4); // 最低4位
-      const defenders = rank3to10.filter(p => !attackers.includes(p)).sort((a,b) => b.avg - a.avg); // 3-6名
-      // 创建PK赛轮次
+      const attackers = [...rank3to10].sort((a,b) => a.avg - b.avg).slice(0,4);
+      const defenders = rank3to10.filter(p => !attackers.includes(p)).sort((a,b) => b.avg - a.avg);
       const pkRound = {
         id: generateId(),
         name: `${round.name} - PK赛`,
         type: 'pk',
         createdAt: new Date().toISOString(),
+        sourceRoundId: round.id,  // 保存源轮次ID，用于生成决赛时获取前两名
         pkData: {
           contestants: rank3to10.map(p => ({ id: p.id, name: p.name, initialRank: sorted.findIndex(s => s.id === p.id)+1 })),
           defenderIds: defenders.map(d => d.id),
-          attackerIds: attackers.map(a => a.id),  // 顺序已经是从低到高（10->7）
+          attackerIds: attackers.map(a => a.id),
           lockedStatus: new Array(4).fill(false),
           challengedOpponent: new Array(4).fill(null),
           scores: {}
@@ -838,14 +829,12 @@
       const challengedOpp = data.challengedOpponent;
       const scores = data.scores || {};
 
-      // 构建备战席HTML
       const defendersHtml = defenderIds.map(defId => {
         const contestant = contestants.find(c => c.id === defId);
         if (!contestant) return '';
         return `<div class="defender-card"><div class="defender-name">${contestant.name}</div><div class="defender-rank">初赛第${contestant.initialRank}名</div></div>`;
       }).join('');
 
-      // 构建攻擂方列表
       const attackersHtml = attackerIds.map((attId, idx) => {
         const att = contestants.find(c => c.id === attId);
         if (!att) return '';
@@ -890,7 +879,6 @@
         <div class="attacker-list">${attackersHtml}</div>
       `;
 
-      // 绑定事件
       document.querySelectorAll('.attacker-score-input').forEach(inp => {
         inp.addEventListener('change', (e) => {
           const attId = inp.dataset.attackerId;
@@ -928,7 +916,6 @@
             alert('当前备战席无人可选');
             return;
           }
-          // 弹出选择器（简单prompt，实际可用自定义模态框，简化处理）
           const options = currentDefenders.map(defId => {
             const c = contestants.find(c => c.id === defId);
             return { id: defId, name: c?.name };
@@ -966,27 +953,20 @@
           if (attScore > oppScore) winnerId = attId;
           else if (attScore < oppScore) winnerId = oppId;
           else {
-            // 同分，弹出选择器
             const attName = contestants.find(c => c.id === attId).name;
             const oppName = contestants.find(c => c.id === oppId).name;
             const choice = confirm(`同分！请选择胜者：\n确定 = ${attName}胜\n取消 = ${oppName}胜`);
             winnerId = choice ? attId : oppId;
           }
-          // 更新备战席
           let newDefenders = [...data.defenderIds];
           if (winnerId === attId) {
-            // 攻擂方胜，淘汰对手，攻擂方进入备战席
             newDefenders = newDefenders.filter(id => id !== oppId);
             if (!newDefenders.includes(attId)) newDefenders.push(attId);
-          } else {
-            // 守擂方胜，淘汰攻擂方，备战席不变
-            // 只需移除攻擂方（它本来就不在备战席）
           }
           data.defenderIds = newDefenders;
           data.lockedStatus[idx] = true;
           saveData();
           renderPkPage();
-          // 检查是否全部锁定，启用生成决赛按钮
           const allLocked = data.lockedStatus.every(v => v === true);
           generateFinalFromPkBtn.disabled = !allLocked;
         });
@@ -1004,22 +984,18 @@
       generateFinalFromPkBtn.disabled = !allLocked;
     }
 
-    // 重置PK赛
     resetPkBtn.addEventListener('click', () => {
       const round = getCurrentPkRound();
       if (!round || round.type !== 'pk') return;
       if (!confirm('重置会将所有PK分数和挑战进度清空，回到初赛初始状态，确定吗？')) return;
       const data = round.pkData;
       const contestants = data.contestants;
-      // 重置选手分数
       data.scores = {};
-      // 重置锁定状态和对手选择
       data.lockedStatus = new Array(4).fill(false);
       data.challengedOpponent = new Array(4).fill(null);
-      // 重置备战席和攻擂队列（按初赛3-6守擂，7-10攻擂且顺序从低到高）
       const sorted = [...contestants].sort((a,b) => a.initialRank - b.initialRank);
-      const defenders = sorted.slice(0,4); // 3,4,5,6名
-      const attackers = sorted.slice(4,8);  // 7,8,9,10名
+      const defenders = sorted.slice(0,4);
+      const attackers = sorted.slice(4,8);
       data.defenderIds = defenders.map(d => d.id);
       data.attackerIds = attackers.map(a => a.id);
       saveData();
@@ -1027,7 +1003,7 @@
       generateFinalFromPkBtn.disabled = true;
     });
 
-    // 生成决赛轮次
+    // ========== 生成决赛轮次（自动从源轮次获取前两名） ==========
     generateFinalFromPkBtn.addEventListener('click', () => {
       const pkRound = getCurrentPkRound();
       if (!pkRound || pkRound.type !== 'pk') return;
@@ -1037,21 +1013,22 @@
         alert('请先完成所有PK挑战');
         return;
       }
-      // 获取初赛前两名（需要从生成此PK赛的源轮次中获取，但这里简化：从所有普通轮次中找到名字包含？或直接让用户选择？）
-      // 更好方法：在生成PK赛时保存sourceRoundId
-      // 但为了简化，让用户手动选择包含前两名的普通轮次，或者从当前PK赛的contestants中无法得到前两名（因为只存了3-10名）
-      // 因此需要用户手动添加前两名。为了体验，弹窗让用户输入决赛选手（可手填id/name或从列表选）。
-      // 这里采用更实用的方法：让用户从当前PK赛的contestants之外手动添加两名选手，或者直接提供输入框。
-      const finalists = [...data.defenderIds]; // 备战席4人
-      const names = finalists.map(id => data.contestants.find(c => c.id === id).name).join(', ');
-      const additional = prompt(`最终备战席选手: ${names}\n请输入直接晋级的两位选手姓名（用逗号分隔）`, "选手X,选手Y");
-      if (!additional) return;
-      const extraNames = additional.split(',').map(s => s.trim()).filter(s => s);
-      if (extraNames.length !== 2) {
-        alert('需要恰好两位选手');
+      // 获取源轮次（初赛）中的前两名
+      const sourceRound = pkRound.sourceRoundId ? getRoundById(pkRound.sourceRoundId) : null;
+      let topTwoPlayers = [];
+      if (sourceRound && sourceRound.type === 'normal') {
+        const playersWithAvg = sourceRound.players.map(p => ({
+          ...p,
+          avg: getPlayerAvg(p)
+        })).filter(p => p.avg !== null);
+        const sorted = [...playersWithAvg].sort((a,b) => b.avg - a.avg);
+        topTwoPlayers = sorted.slice(0,2).map(p => ({ id: p.id, name: p.name }));
+      }
+      if (topTwoPlayers.length !== 2) {
+        alert('无法从初赛轮次获取前两名选手，请确保初赛已完成评分');
         return;
       }
-      // 创建决赛轮次
+      const finalists = [...data.defenderIds];
       const finalRound = {
         id: generateId(),
         name: `${pkRound.name} - 决赛`,
@@ -1060,19 +1037,19 @@
         judges: Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`),
         players: []
       };
+      // 添加初赛前两名
+      for (let p of topTwoPlayers) {
+        finalRound.players.push({ id: p.id, name: p.name, scores: new Array(JUDGES_COUNT).fill(null) });
+      }
       // 添加PK赛胜出的4人
       for (let id of finalists) {
         const c = data.contestants.find(c => c.id === id);
         if (c) finalRound.players.push({ id: c.id, name: c.name, scores: new Array(JUDGES_COUNT).fill(null) });
       }
-      // 添加手动输入的两人（需要生成新id，避免冲突）
-      for (let name of extraNames) {
-        finalRound.players.push({ id: `F${Date.now()}-${Math.random()}`, name: name, scores: new Array(JUDGES_COUNT).fill(null) });
-      }
       appData.rounds.push(finalRound);
       saveData();
       renderRoundList();
-      alert(`决赛轮次“${finalRound.name}”已创建，共有${finalRound.players.length}人`);
+      alert(`决赛轮次“${finalRound.name}”已创建，共有${finalRound.players.length}人（初赛前2名 + PK赛胜出4人）`);
       openDetail(finalRound.id);
     });
 

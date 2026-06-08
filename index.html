@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=yes, viewport-fit=cover">
+  <title>赛事评分 · 轮次管理</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    }
+    body {
+      background: #f5f7fb;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 12px;
+    }
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      border-radius: 0px;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.05), 0 5px 15px rgba(0,0,0,0.03);
+      padding: 18px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      position: relative;
+    }
+    .page { display: none; flex-direction: column; gap: 18px; width: 100%; }
+    .page.active { display: flex; }
+
+    /* 主页 */
+    .main-header { display: flex; align-items: center; justify-content: space-between; }
+    .main-header h1 {
+      font-size: 1.8rem; font-weight: 650;
+      background: linear-gradient(135deg, #1e2b4f, #2c3e6e);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .round-list { display: flex; flex-direction: column; gap: 12px; }
+    .round-card {
+      background: #f9fafb; border: 1px solid #eef1f6; border-radius: 20px;
+      padding: 16px; display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; transition: 0.2s;
+    }
+    .round-card:active { background: #f0f2f8; }
+    .round-info h3 { font-size: 1.1rem; font-weight: 650; color: #1f2937; }
+    .round-info p { font-size: 0.8rem; color: #6b7280; margin-top: 4px; }
+    .round-time { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
+    .btn-icon { background: none; border: none; font-size: 1.3rem; cursor: pointer; padding: 6px; color: #6b7280; }
+    .btn {
+      background: #f9fafb;
+      border: 0px solid #d1d5db;
+      padding: 10px 16px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+    .btn-primary { background: #1e2b4f; border-color: #1e2b4f; color: white; }
+    .btn-outline { background: none; border:none; }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; border-radius: 20px; }
+    .btn-danger { background: #ef4444; color: white; border: none; }
+
+    /* 普通详情页 (保持不变) */
+    .detail-header { display: flex; align-items: center; gap: 12px; }
+    .back-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #1e2b4f; }
+    .round-title { flex:1; font-weight:650; font-size:1.3rem; display:flex; align-items:center; gap:6px; }
+    .round-title input {
+      border:none; background:transparent; font-weight:650; font-size:1.3rem; width:240px;
+      outline:none; border-bottom:0px dashed transparent;
+    }
+    .round-title input:focus { border-bottom-color:#1e2b4f; }
+    .manage-btn { background:white; border:none; font-size:1.4rem; padding:1px 4px; border-radius:30px; cursor:pointer; }
+
+    .score-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+    }
+    .score-header .title { font-weight: 650; font-size: 1rem; }
+    .eye-btn {
+      background: none; border: none; font-size: 0.8rem; cursor: pointer;
+      padding: 2px 8px; border-radius: 20px; background: white; opacity: 0.3;
+    }
+    .score-grid { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; font-size: 0; }
+    .score-grid > * { font-size: 1rem; }
+    .player-score-row {
+      background: #fafbfc; border-radius: 10px; padding: 6px 12px 0 12px;
+      border: 1px solid #edf0f5;
+    }
+    .player-name-row { display: flex; justify-content: space-between; align-items: center; font-weight: 650; margin-bottom: 4px; padding-left: 8px; }
+    .player-id { margin-right: 16px; font-weight: 650; }
+    .player-name { flex: 1; }
+    .judges-inputs { display: flex; flex-wrap: wrap; gap: 8px; }
+    .judge-item {
+      display: flex; flex-direction: column; align-items: center; background: white;
+      border-radius: 8px; padding: 2px 2px 0 2px; min-width: 55px; border: 0px solid #e9eef2;
+    }
+    .judge-label { font-size: 0.65rem; color: #6b7280; margin-bottom: -8px; white-space: nowrap; }
+    .judge-item input {
+      width: 54px; padding: 6px 1px; text-align: center; border: none;
+      background: transparent; font-weight: 600; font-size: 1rem; outline: none;
+      border-radius: 4px;
+    }
+    .judge-item input:focus { background: rgba(153, 255, 211, 0.3); }
+    .avg-badge {
+      background: #1e2b4f; color: white; border-radius: 20px;
+      padding: 3px 16px; font-weight: 700; font-size: 0.8rem; margin-left: 8px;
+    }
+    .ranking-list { display: flex; flex-direction: column; gap: 8px; }
+    .rank-item {
+      display: flex; align-items: center; background: #f8fafd; border-radius: 18px;
+      padding: 10px 14px; border: 1px solid #eef1f6; gap: 8px;
+    }
+    .rank-num { font-weight: 700; font-size: 1.2rem; width: 32px; color: #FF7295; }
+    .rank-name { flex: 1; font-weight: 600; }
+    .rank-avg { font-weight: 700; background: #eef2ff; padding: 4px 12px; border-radius: 20px; }
+
+    /* 管理面板 (原有样式不动) */
+    .modal-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.4); display:none; align-items:flex-end; justify-content:center; z-index:100;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-sheet {
+      background: white; width:100%; max-width:480px; border-radius:28px 28px 0 0;
+      padding:20px 16px 28px; max-height:80vh; overflow-y:auto; display:flex; flex-direction:column; gap:18px;
+    }
+    .modal-handle { width:36px; height:5px; background:#d1d5db; border-radius:4px; margin:0 auto 8px; }
+    .input-group { display:flex; flex-direction:column; gap:6px; }
+    .input-group label { font-size:0.8rem; font-weight:600; color:#4b5563; }
+    .input-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .input-row input { flex:1; padding:10px 4px; text-align: center; border:1px solid #e5e7eb; border-radius:8px; font-size:0.9rem; background:#f9fafb; outline:none; }
+    .round-name-input { border: none !important; background: #f9fafb; padding: 2px 8px; border-radius: 8px; outline: none; font-size:0.98rem; color:#575757; }
+    .player-edit-item {
+      display:flex; align-items:center; gap:8px; background:#f3f4f6; padding:6px 10px; border-radius:14px; margin-bottom:6px;
+    }
+    .player-edit-item input { border:1px solid #e5e7eb; border-radius:8px; padding:6px 10px; width:70px; background:white; font-size:0.9rem }
+    .player-edit-item .edit-player-name { flex:1; }
+    .move-up-btn, .move-down-btn {
+      background: #f0f2f5;
+      border: none;
+      font-size: 1rem;
+      padding: 4px 8px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+    .move-up-btn:disabled, .move-down-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .flex-row { display:flex; justify-content:space-between; align-items:center; }
+
+    /* ========== PK赛详情页全新样式 ========== */
+    .pk-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .pk-defenders-area {
+      background: #fefce8;
+      border-radius: 24px;
+      padding: 16px;
+      border: 1px solid #fde68a;
+    }
+    .pk-defenders-area h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #854d0e;
+    }
+    .defenders-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+    .defender-card {
+      background: white;
+      border-radius: 16px;
+      padding: 8px 16px;
+      min-width: 100px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border: 1px solid #fcd34d;
+    }
+    .defender-name {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .defender-rank {
+      font-size: 0.7rem;
+      color: #b45309;
+    }
+    .attacker-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .attacker-card {
+      background: #f9fafb;
+      border-radius: 20px;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      transition: all 0.2s;
+    }
+    .attacker-card.locked {
+      background: #eef2ff;
+      border-color: #a5b4fc;
+      opacity: 0.8;
+    }
+    .attacker-main {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .attacker-info {
+      flex: 2;
+      min-width: 120px;
+    }
+    .attacker-name {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .attacker-rank {
+      font-size: 0.7rem;
+      color: #6b7280;
+    }
+    .attacker-score-input {
+      width: 80px;
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .opponent-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: #fef9e3;
+      padding: 8px 12px;
+      border-radius: 16px;
+      margin-top: 8px;
+    }
+    .opponent-info {
+      flex: 2;
+    }
+    .opponent-name {
+      font-weight: 600;
+    }
+    .opponent-rank {
+      font-size: 0.7rem;
+      color: #6b7280;
+    }
+    .opponent-score-input {
+      width: 80px;
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 40px;
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-btn:active { background: #e5e7eb; }
+    .lock-btn { background: #10b98120; color: #10b981; }
+    .lock-btn.locked { background: #10b981; color: white; }
+    .reset-pk-btn { background: #ef4444; color: white; border: none; }
+    .winner-highlight {
+      background: #d1fae5;
+      border: 2px solid #10b981;
+      animation: pulse 0.5s;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+    .pk-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body style="padding: 0px;">
+<div class="app-container" id="appRoot" style="padding-right: 20px; padding-left: 20px; padding-top: 10px;">
+  <!-- 主页 -->
+  <div id="mainPage" class="page active">
+    <div class="main-header">
+      <h1>📋 赛事轮次</h1>
+      <button class="btn btn-primary" id="createRoundBtn">＋ 新建轮次</button>
+    </div>
+    <div id="roundListContainer" class="round-list"></div>
+  </div>
+
+  <!-- 普通淘汰赛详情页（保持原有全部功能） -->
+  <div id="detailPage" class="page">
+    <div class="detail-header">
+      <button class="back-btn" id="backToMainBtn">←</button>
+      <div class="round-title">
+        <input type="text" id="detailRoundNameInput" placeholder="轮次名称">
+      </div>
+      <button class="manage-btn" id="openManagePanelBtn">⚙️</button>
+    </div>
+    <div class="card" style="padding-left: 0; padding-top: 0; padding-right: 0; padding-bottom: 8px;">
+      <div class="score-header">
+        <span class="title">📋 评委打分 <span style="font-weight:400;font-size:0.8rem;">(0.5步进)</span></span>
+        <button class="eye-btn" id="toggleJudgesNameBtn" title="切换评委名称显示">👁️</button>
+      </div>
+      <div id="scoresContainer" class="score-grid">暂无选手</div>
+    </div>
+    <div class="card">
+      <div style="font-weight:650; margin-bottom:8px;">🏆 实时排名</div>
+      <div id="rankingContainer" class="ranking-list"></div>
+    </div>
+    <!-- 新增：生成PK赛按钮 -->
+    <button class="btn btn-primary" id="generatePkBtn" style="margin-top: 8px;">🎯 生成 PK 赛</button>
+  </div>
+
+  <!-- PK赛详情页（全新页面） -->
+  <div id="pkPage" class="page">
+    <div class="detail-header">
+      <button class="back-btn" id="backFromPkBtn">←</button>
+      <div class="round-title">
+        <input type="text" id="pkRoundNameInput" placeholder="PK赛名称">
+      </div>
+      <button class="manage-btn" id="pkManageBtn" style="opacity:0.5; pointer-events:none;">⚙️</button>
+    </div>
+    <div class="pk-container" id="pkContainer">
+      <!-- 动态渲染PK赛内容 -->
+    </div>
+    <div class="pk-footer">
+      <button class="btn btn-danger reset-pk-btn" id="resetPkBtn">重置 PK 赛</button>
+      <button class="btn btn-primary" id="generateFinalFromPkBtn" disabled>🏆 生成决赛</button>
+    </div>
+  </div>
+
+  <!-- 管理面板（普通淘汰赛）保持不变 -->
+  <div class="modal-overlay" id="manageModal">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 style="font-weight:650;">⚙️ 轮次与选手管理</h3>
+      <div class="input-group">
+        <input type="text" id="modalRoundName" placeholder="例如：半决赛" class="round-name-input">
+      </div>
+      <div class="input-group">
+        <label>👤 评委姓名 (5位)</label>
+        <div id="judgesEditContainer" class="input-row" style="gap:6px;"></div>
+      </div>
+      <div class="input-group">
+        <div class="flex-row">
+          <label>👥 选手名单</label>
+          <button class="btn btn-outline btn-sm" id="addPlayerInModalBtn">＋ 添加选手</button>
+        </div>
+        <div id="playersEditList"></div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button class="btn btn-primary" id="saveManageBtn">保存设置</button>
+        <button class="btn" id="closeManageBtn">取消</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const JUDGES_COUNT = 5;
+    const STORAGE_KEY = 'contest_full_data_v2';
+
+    let appData = { rounds: [] };
+    let currentRoundId = null;
+    let currentPkRoundId = null;   // 当前打开的PK赛轮次ID
+    let showRealJudgeNames = true;
+
+    // DOM 元素
+    const mainPage = document.getElementById('mainPage');
+    const detailPage = document.getElementById('detailPage');
+    const pkPage = document.getElementById('pkPage');
+    const roundListContainer = document.getElementById('roundListContainer');
+    const scoresContainer = document.getElementById('scoresContainer');
+    const rankingContainer = document.getElementById('rankingContainer');
+    const detailRoundNameInput = document.getElementById('detailRoundNameInput');
+    const manageModal = document.getElementById('manageModal');
+    const modalRoundName = document.getElementById('modalRoundName');
+    const judgesEditContainer = document.getElementById('judgesEditContainer');
+    const playersEditList = document.getElementById('playersEditList');
+    const toggleJudgesBtn = document.getElementById('toggleJudgesNameBtn');
+    const generatePkBtn = document.getElementById('generatePkBtn');
+    const backFromPkBtn = document.getElementById('backFromPkBtn');
+    const pkRoundNameInput = document.getElementById('pkRoundNameInput');
+    const pkContainer = document.getElementById('pkContainer');
+    const resetPkBtn = document.getElementById('resetPkBtn');
+    const generateFinalFromPkBtn = document.getElementById('generateFinalFromPkBtn');
+
+    // 辅助函数
+    function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,6); }
+    function getRoundById(id) { return appData.rounds.find(r => r.id === id); }
+    function getCurrentRound() { return currentRoundId ? getRoundById(currentRoundId) : null; }
+    function getCurrentPkRound() { return currentPkRoundId ? getRoundById(currentPkRoundId) : null; }
+
+    function isValidScore(value) {
+      if (value === '' || value === null || value === undefined) return true;
+      const str = String(value).trim();
+      if (str === '') return true;
+      if (!/^\d{1,3}(\.([05])?)?$/.test(str)) return false;
+      const num = parseFloat(str);
+      return !isNaN(num) && num >= 0 && num <= 100;
+    }
+
+    function calculateAverage(scores) {
+      const nums = scores.map(s => {
+        if (s === null || s === undefined || String(s).trim() === '') return null;
+        const n = parseFloat(s);
+        return isNaN(n) ? null : n;
+      }).filter(v => v !== null);
+      if (nums.length < 3) return null;
+      const sorted = [...nums].sort((a,b)=>a-b);
+      const trimmed = sorted.slice(1, -1);
+      return trimmed.reduce((a,b)=>a+b,0) / trimmed.length;
+    }
+
+    function getPlayerAvg(player) { return player?.scores ? calculateAverage(player.scores) : null; }
+
+    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); }
+    function loadData() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.rounds) {
+            appData = parsed;
+            appData.rounds.forEach(r => {
+              if (!r.type) r.type = 'normal';
+              if (r.type === 'normal') {
+                if (!r.judges || r.judges.length !== JUDGES_COUNT) r.judges = Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`);
+                r.players.forEach(p => { if (!p.scores || p.scores.length !== JUDGES_COUNT) p.scores = new Array(JUDGES_COUNT).fill(null); });
+              } else if (r.type === 'pk') {
+                // 确保 pkData 存在
+                if (!r.pkData) {
+                  // 兼容旧数据，若有则保持
+                  r.pkData = { contestants: [], defenderIds: [], attackerIds: [], lockedStatus: [], challengedOpponent: [], scores: {} };
+                }
+              }
+            });
+          }
+        } catch(e){}
+      }
+      if (!appData.rounds.length) {
+        appData.rounds.push({
+          id: generateId(), name: '普通淘汰赛1', type: 'normal',
+          judges: ['张老师','李老师','王老师','赵老师','陈老师'],
+          players: [
+            { id:'01', name:'选手A', scores: [null,null,null,null,null] },
+            { id:'02', name:'选手B', scores: [null,null,null,null,null] },
+            { id:'03', name:'选手C', scores: [null,null,null,null,null] }
+          ],
+          createdAt: new Date().toISOString()
+        });
+        saveData();
+      }
+    }
+
+    // 获取轮次类型显示名称
+    function getRoundTypeName(type) {
+      return type === 'pk' ? 'PK赛' : '淘汰赛';
+    }
+
+    // 渲染主页轮次列表（增加创建时间、类型标识）
+    function renderRoundList() {
+      if (!appData.rounds.length) {
+        roundListContainer.innerHTML = '<div style="color:#9ca3af; padding:16px;">暂无轮次</div>';
+        return;
+      }
+      roundListContainer.innerHTML = appData.rounds.map(r => {
+        const date = r.createdAt ? new Date(r.createdAt) : new Date();
+        const timeStr = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getDate().toString().padStart(2,'0')} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+        return `
+          <div class="round-card" data-round-id="${r.id}" data-type="${r.type}">
+            <div class="round-info">
+              <h3>${r.name} <span style="font-size:0.7rem; background:#e5e7eb; padding:2px 8px; border-radius:20px;">${getRoundTypeName(r.type)}</span></h3>
+              <p>${r.players?.length || 0} 位选手</p>
+              <div class="round-time">📅 ${timeStr}</div>
+            </div>
+            <button class="btn-icon delete-round-btn" data-id="${r.id}">🗑️</button>
+          </div>
+        `;
+      }).join('');
+      document.querySelectorAll('.round-card').forEach(c => c.addEventListener('click', e => {
+        if (e.target.classList.contains('delete-round-btn')) return;
+        const roundId = c.dataset.roundId;
+        const round = getRoundById(roundId);
+        if (round.type === 'normal') {
+          openDetail(roundId);
+        } else if (round.type === 'pk') {
+          openPkDetail(roundId);
+        }
+      }));
+      document.querySelectorAll('.delete-round-btn').forEach(b => b.addEventListener('click', e => {
+        e.stopPropagation();
+        if (confirm('删除轮次？')) {
+          appData.rounds = appData.rounds.filter(r => r.id !== b.dataset.id);
+          saveData(); renderRoundList();
+          if (currentRoundId === b.dataset.id) { currentRoundId = null; showMain(); }
+          if (currentPkRoundId === b.dataset.id) { currentPkRoundId = null; showMain(); }
+        }
+      }));
+    }
+
+    // ========== 普通淘汰赛相关函数（完全保留原有逻辑，未做任何改动）==========
+    function showMain() { mainPage.classList.add('active'); detailPage.classList.remove('active'); pkPage.classList.remove('active'); renderRoundList(); }
+    function openDetail(roundId) {
+      currentRoundId = roundId;
+      const round = getCurrentRound();
+      if (!round) return;
+      detailRoundNameInput.value = round.name;
+      mainPage.classList.remove('active');
+      detailPage.classList.add('active');
+      pkPage.classList.remove('active');
+      renderScores();
+      renderRanking();
+    }
+    function renderScores() {
+      const round = getCurrentRound();
+      if (!round || !round.players.length) {
+        scoresContainer.innerHTML = '<div style="color:#9ca3af; padding:12px;">暂无选手</div>';
+        return;
+      }
+      const judges = round.judges;
+      scoresContainer.innerHTML = round.players.map(player => {
+        const scores = player.scores || [];
+        let inputsHtml = '';
+        for (let i = 0; i < JUDGES_COUNT; i++) {
+          const val = scores[i] !== undefined && scores[i] !== null ? scores[i] : '';
+          const judgeLabel = showRealJudgeNames ? (judges[i] || `评委${i+1}`) : `评委${i+1}`;
+          inputsHtml += `
+            <div class="judge-item">
+              <span class="judge-label">${judgeLabel}</span>
+              <input type="text" inputmode="decimal" pattern="[0-9]*\.?[05]?" placeholder="-" value="${val}"
+                     data-player-id="${player.id}" data-judge-index="${i}" class="score-input" autocomplete="off">
+            </div>
+          `;
+        }
+        const avg = getPlayerAvg(player);
+        return `
+          <div class="player-score-row" data-player-id="${player.id}">
+            <div class="player-name-row">
+              <span class="player-id">${player.id}</span>
+              <span class="player-name">${player.name}</span>
+              <span class="avg-badge" id="avg-${player.id}">均分 ${avg!==null ? avg.toFixed(2) : '--'}</span>
+            </div>
+            <div class="judges-inputs">${inputsHtml}</div>
+          </div>
+        `;
+      }).join('');
+      document.querySelectorAll('.score-input').forEach(inp => {
+        inp.addEventListener('input', handleScoreInput);
+        inp.addEventListener('blur', handleScoreBlur);
+      });
+    }
+    function updateSingleAvg(playerId) {
+      const round = getCurrentRound();
+      const player = round?.players.find(p => p.id === playerId);
+      if (!player) return;
+      const avg = getPlayerAvg(player);
+      const el = document.getElementById(`avg-${playerId}`);
+      if (el) el.textContent = `均分 ${avg !== null ? avg.toFixed(2) : '--'}`;
+    }
+    function findNextInput(currentInput, playerId, currentIndex) {
+      const row = currentInput.closest('.player-score-row');
+      if (!row) return null;
+      const inputs = row.querySelectorAll('.score-input');
+      for (let i = currentIndex + 1; i < inputs.length; i++) {
+        if (inputs[i].value.trim() === '') return inputs[i];
+      }
+      return null;
+    }
+    function handleScoreInput(e) {
+      const input = e.target;
+      const playerId = input.dataset.playerId;
+      const judgeIndex = parseInt(input.dataset.judgeIndex, 10);
+      let raw = input.value.trim();
+      if (raw !== '' && !isValidScore(raw)) {
+        input.style.backgroundColor = '#ffe5e5';
+        return;
+      }
+      input.style.backgroundColor = '';
+      const round = getCurrentRound();
+      if (!round) return;
+      const player = round.players.find(p => p.id === playerId);
+      if (player) {
+        if (!player.scores) player.scores = new Array(JUDGES_COUNT).fill(null);
+        player.scores[judgeIndex] = raw === '' ? null : raw;
+        saveData();
+        updateSingleAvg(playerId);
+        renderRanking();
+        if (raw !== '' && isValidScore(raw) && /\.[05]$/.test(raw)) {
+          const next = findNextInput(input, playerId, judgeIndex);
+          if (next) next.focus();
+        }
+      }
+    }
+    function handleScoreBlur(e) {
+      const input = e.target;
+      let raw = input.value.trim();
+      if (raw !== '' && !isValidScore(raw)) {
+        input.value = '';
+        const playerId = input.dataset.playerId;
+        const judgeIndex = parseInt(input.dataset.judgeIndex, 10);
+        const round = getCurrentRound();
+        if (round) {
+          const player = round.players.find(p => p.id === playerId);
+          if (player?.scores) {
+            player.scores[judgeIndex] = null;
+            saveData();
+            updateSingleAvg(playerId);
+            renderRanking();
+          }
+        }
+      }
+    }
+    function renderRanking() {
+      const round = getCurrentRound();
+      if (!round) { rankingContainer.innerHTML = ''; return; }
+      const ranked = round.players.map(p => ({...p, avg: getPlayerAvg(p)})).filter(p => p.avg !== null).sort((a,b) => b.avg - a.avg);
+      rankingContainer.innerHTML = ranked.length ? ranked.map((p,i) => `
+        <div class="rank-item"><span class="rank-num">#${i+1}</span><span class="rank-name">${p.id} ${p.name}</span><span class="rank-avg">${p.avg.toFixed(2)}</span></div>
+      `).join('') : '<div style="color:#9ca3af; padding:8px;">需要至少3个有效分数</div>';
+    }
+    toggleJudgesBtn.addEventListener('click', () => {
+      showRealJudgeNames = !showRealJudgeNames;
+      toggleJudgesBtn.textContent = showRealJudgeNames ? '👁️' : '👁️‍🗨️';
+      renderScores();
+    });
+    detailRoundNameInput.addEventListener('input', () => {
+      const round = getCurrentRound();
+      if (round) { round.name = detailRoundNameInput.value; saveData(); }
+    });
+    // 管理面板相关（保持不变）
+    function openManage() {
+      const round = getCurrentRound();
+      if (!round) return;
+      modalRoundName.value = round.name;
+      judgesEditContainer.innerHTML = round.judges.map((n,i) => `<input type="text" value="${n}" data-judge-index="${i}" class="judge-name-input" style="width:40px;">`).join('');
+      renderPlayerEditList(round);
+      manageModal.classList.add('active');
+    }
+    function renderPlayerEditList(round) {
+      playersEditList.innerHTML = round.players.map((p, index) => `
+        <div class="player-edit-item" data-player-id="${p.id}" data-index="${index}">
+          <input type="text" value="${p.id}" class="edit-player-id" style="width:60px;">
+          <input type="text" value="${p.name}" class="edit-player-name" style="flex:1;">
+          <button class="btn-sm btn-outline move-up-btn" data-index="${index}" ${index === 0 ? 'disabled' : ''}>▲</button>
+          <button class="btn-sm btn-outline move-down-btn" data-index="${index}" ${index === round.players.length-1 ? 'disabled' : ''}>▼</button>
+          <button class="btn-sm btn-outline remove-player-btn" data-id="${p.id}">删除</button>
+        </div>
+      `).join('');
+      document.querySelectorAll('.move-up-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index);
+          if (idx <= 0) return;
+          [round.players[idx-1], round.players[idx]] = [round.players[idx], round.players[idx-1]];
+          renderPlayerEditList(round);
+        });
+      });
+      document.querySelectorAll('.move-down-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index);
+          if (idx >= round.players.length-1) return;
+          [round.players[idx], round.players[idx+1]] = [round.players[idx+1], round.players[idx]];
+          renderPlayerEditList(round);
+        });
+      });
+      document.querySelectorAll('.remove-player-btn').forEach(b => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        round.players = round.players.filter(p => p.id !== b.dataset.id);
+        renderPlayerEditList(round);
+      }));
+    }
+    document.getElementById('addPlayerInModalBtn').addEventListener('click', () => {
+      const round = getCurrentRound();
+      if (!round) return;
+      round.players.push({ id: `P${round.players.length+1}`, name: '新选手', scores: new Array(JUDGES_COUNT).fill(null) });
+      renderPlayerEditList(round);
+    });
+    document.getElementById('saveManageBtn').addEventListener('click', () => {
+      const round = getCurrentRound();
+      if (!round) return;
+      round.name = modalRoundName.value.trim() || round.name;
+      document.querySelectorAll('.judge-name-input').forEach((inp, i) => { if(i<JUDGES_COUNT) round.judges[i] = inp.value.trim() || `评委${i+1}`; });
+      const items = document.querySelectorAll('.player-edit-item');
+      const newPlayers = [];
+      items.forEach(item => {
+        const idInp = item.querySelector('.edit-player-id');
+        const nameInp = item.querySelector('.edit-player-name');
+        const existing = round.players.find(p => p.id === item.dataset.playerId);
+        if (existing) {
+          existing.id = idInp.value.trim() || existing.id;
+          existing.name = nameInp.value.trim() || existing.name;
+          newPlayers.push(existing);
+        }
+      });
+      round.players = newPlayers;
+      saveData();
+      detailRoundNameInput.value = round.name;
+      renderScores(); renderRanking();
+      manageModal.classList.remove('active');
+    });
+    document.getElementById('closeManageBtn').addEventListener('click', () => manageModal.classList.remove('active'));
+    document.getElementById('openManagePanelBtn').addEventListener('click', openManage);
+    manageModal.addEventListener('click', e => { if(e.target === manageModal) manageModal.classList.remove('active'); });
+    document.getElementById('backToMainBtn').addEventListener('click', showMain);
+    document.getElementById('createRoundBtn').addEventListener('click', () => {
+      const type = confirm('创建普通淘汰赛？\n确定=普通淘汰赛，取消=PK赛') ? 'normal' : 'pk';
+      const defaultName = type === 'normal' ? '普通淘汰赛' : 'PK赛';
+      let name = prompt('轮次名称：', defaultName);
+      if (!name) return;
+      const newRound = {
+        id: generateId(),
+        name: name,
+        type: type,
+        createdAt: new Date().toISOString()
+      };
+      if (type === 'normal') {
+        newRound.judges = Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`);
+        newRound.players = [];
+      } else {
+        newRound.pkData = {
+          contestants: [],      // 8人列表
+          defenderIds: [],      // 当前备战席ID
+          attackerIds: [],      // 剩余攻擂者ID队列
+          lockedStatus: [],     // 每个攻擂者是否已完成
+          challengedOpponent: [], // 每个攻擂者选择的对手ID
+          scores: {}            // 选手ID -> pk分数
+        };
+      }
+      appData.rounds.push(newRound);
+      saveData();
+      renderRoundList();
+    });
+
+    // ========== 生成 PK 赛（从当前普通轮次） ==========
+    generatePkBtn.addEventListener('click', () => {
+      const round = getCurrentRound();
+      if (!round || round.type !== 'normal') {
+        alert('请先打开一个普通淘汰赛轮次');
+        return;
+      }
+      // 计算初赛排名
+      const playersWithAvg = round.players.map(p => ({
+        ...p,
+        avg: getPlayerAvg(p)
+      })).filter(p => p.avg !== null);
+      if (playersWithAvg.length < 10) {
+        alert('初赛选手不足10人，无法生成PK赛（需要至少10人完成评分）');
+        return;
+      }
+      const sorted = [...playersWithAvg].sort((a,b) => b.avg - a.avg);
+      const top2 = sorted.slice(0,2);
+      const rank3to10 = sorted.slice(2,10);
+      if (rank3to10.length !== 8) {
+        alert('第3-10名选手不足8人');
+        return;
+      }
+      // 按初赛排名从低到高排序攻擂方（第10,9,8,7名）
+      const attackers = [...rank3to10].sort((a,b) => a.avg - b.avg).slice(0,4); // 最低4位
+      const defenders = rank3to10.filter(p => !attackers.includes(p)).sort((a,b) => b.avg - a.avg); // 3-6名
+      // 创建PK赛轮次
+      const pkRound = {
+        id: generateId(),
+        name: `${round.name} - PK赛`,
+        type: 'pk',
+        createdAt: new Date().toISOString(),
+        pkData: {
+          contestants: rank3to10.map(p => ({ id: p.id, name: p.name, initialRank: sorted.findIndex(s => s.id === p.id)+1 })),
+          defenderIds: defenders.map(d => d.id),
+          attackerIds: attackers.map(a => a.id),  // 顺序已经是从低到高（10->7）
+          lockedStatus: new Array(4).fill(false),
+          challengedOpponent: new Array(4).fill(null),
+          scores: {}
+        }
+      };
+      appData.rounds.push(pkRound);
+      saveData();
+      renderRoundList();
+      openPkDetail(pkRound.id);
+    });
+
+    // ========== PK赛详情页渲染与逻辑 ==========
+    function openPkDetail(roundId) {
+      currentPkRoundId = roundId;
+      const round = getCurrentPkRound();
+      if (!round) return;
+      pkRoundNameInput.value = round.name;
+      mainPage.classList.remove('active');
+      detailPage.classList.remove('active');
+      pkPage.classList.add('active');
+      renderPkPage();
+    }
+    function renderPkPage() {
+      const round = getCurrentPkRound();
+      if (!round || round.type !== 'pk') return;
+      const data = round.pkData;
+      const contestants = data.contestants;
+      const defenderIds = data.defenderIds;
+      const attackerIds = data.attackerIds;
+      const locked = data.lockedStatus;
+      const challengedOpp = data.challengedOpponent;
+      const scores = data.scores || {};
+
+      // 构建备战席HTML
+      const defendersHtml = defenderIds.map(defId => {
+        const contestant = contestants.find(c => c.id === defId);
+        if (!contestant) return '';
+        return `<div class="defender-card"><div class="defender-name">${contestant.name}</div><div class="defender-rank">初赛第${contestant.initialRank}名</div></div>`;
+      }).join('');
+
+      // 构建攻擂方列表
+      const attackersHtml = attackerIds.map((attId, idx) => {
+        const att = contestants.find(c => c.id === attId);
+        if (!att) return '';
+        const isLocked = locked[idx];
+        const chosenOppId = challengedOpp[idx];
+        const chosenOpp = chosenOppId ? contestants.find(c => c.id === chosenOppId) : null;
+        const attScore = scores[attId] !== undefined ? scores[attId] : '';
+        const oppScore = chosenOppId && scores[chosenOppId] !== undefined ? scores[chosenOppId] : '';
+
+        return `
+          <div class="attacker-card ${isLocked ? 'locked' : ''}" data-attacker-index="${idx}">
+            <div class="attacker-main">
+              <div class="attacker-info">
+                <div class="attacker-name">${att.name}</div>
+                <div class="attacker-rank">初赛第${att.initialRank}名</div>
+              </div>
+              <input type="text" class="attacker-score-input" data-attacker-id="${attId}" value="${attScore}" placeholder="分数" ${isLocked ? 'disabled' : ''}>
+              ${!chosenOppId ? `<button class="btn btn-sm select-opponent-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''}>选择对手</button>` : ''}
+            </div>
+            ${chosenOpp ? `
+              <div class="opponent-area">
+                <div class="opponent-info">
+                  <div class="opponent-name">🎤 对手: ${chosenOpp.name}</div>
+                  <div class="opponent-rank">初赛第${chosenOpp.initialRank}名</div>
+                </div>
+                <input type="text" class="opponent-score-input" data-opponent-id="${chosenOppId}" value="${oppScore}" placeholder="对手分数" ${isLocked ? 'disabled' : ''}>
+                <div class="action-buttons">
+                  <button class="icon-btn lock-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''}>🔒</button>
+                  <button class="icon-btn" data-idx="${idx}" data-action="rechoose" ${isLocked ? 'disabled' : ''}>🔄</button>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      pkContainer.innerHTML = `
+        <div class="pk-defenders-area">
+          <h3>🏆 当前备战席（守擂方）</h3>
+          <div class="defenders-grid">${defendersHtml || '<div>暂无</div>'}</div>
+        </div>
+        <div class="attacker-list">${attackersHtml}</div>
+      `;
+
+      // 绑定事件
+      document.querySelectorAll('.attacker-score-input').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+          const attId = inp.dataset.attackerId;
+          const val = inp.value.trim();
+          if (val !== '' && !isValidScore(val)) {
+            alert('请输入0-100的数字，支持0.5步进');
+            inp.value = '';
+            return;
+          }
+          scores[attId] = val === '' ? null : parseFloat(val);
+          data.scores = scores;
+          saveData();
+        });
+      });
+      document.querySelectorAll('.opponent-score-input').forEach(inp => {
+        inp.addEventListener('change', (e) => {
+          const oppId = inp.dataset.opponentId;
+          const val = inp.value.trim();
+          if (val !== '' && !isValidScore(val)) {
+            alert('请输入0-100的数字，支持0.5步进');
+            inp.value = '';
+            return;
+          }
+          scores[oppId] = val === '' ? null : parseFloat(val);
+          data.scores = scores;
+          saveData();
+        });
+      });
+      document.querySelectorAll('.select-opponent-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(btn.dataset.idx);
+          if (locked[idx]) return;
+          const currentDefenders = data.defenderIds;
+          if (currentDefenders.length === 0) {
+            alert('当前备战席无人可选');
+            return;
+          }
+          // 弹出选择器（简单prompt，实际可用自定义模态框，简化处理）
+          const options = currentDefenders.map(defId => {
+            const c = contestants.find(c => c.id === defId);
+            return { id: defId, name: c?.name };
+          });
+          const optionText = options.map((opt, i) => `${i+1}. ${opt.name}`).join('\n');
+          const choice = prompt(`请选择对手（输入编号）：\n${optionText}`);
+          const selectedIndex = parseInt(choice) - 1;
+          if (selectedIndex >= 0 && selectedIndex < options.length) {
+            const selectedId = options[selectedIndex].id;
+            data.challengedOpponent[idx] = selectedId;
+            saveData();
+            renderPkPage();
+          } else {
+            alert('无效选择');
+          }
+        });
+      });
+      document.querySelectorAll('.lock-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(btn.dataset.idx);
+          if (locked[idx]) return;
+          const attId = attackerIds[idx];
+          const oppId = data.challengedOpponent[idx];
+          if (!oppId) {
+            alert('请先选择对手');
+            return;
+          }
+          const attScore = scores[attId];
+          const oppScore = scores[oppId];
+          if (attScore === undefined || attScore === '' || oppScore === undefined || oppScore === '') {
+            alert('请先填写双方分数');
+            return;
+          }
+          let winnerId = null;
+          if (attScore > oppScore) winnerId = attId;
+          else if (attScore < oppScore) winnerId = oppId;
+          else {
+            // 同分，弹出选择器
+            const attName = contestants.find(c => c.id === attId).name;
+            const oppName = contestants.find(c => c.id === oppId).name;
+            const choice = confirm(`同分！请选择胜者：\n确定 = ${attName}胜\n取消 = ${oppName}胜`);
+            winnerId = choice ? attId : oppId;
+          }
+          // 更新备战席
+          let newDefenders = [...data.defenderIds];
+          if (winnerId === attId) {
+            // 攻擂方胜，淘汰对手，攻擂方进入备战席
+            newDefenders = newDefenders.filter(id => id !== oppId);
+            if (!newDefenders.includes(attId)) newDefenders.push(attId);
+          } else {
+            // 守擂方胜，淘汰攻擂方，备战席不变
+            // 只需移除攻擂方（它本来就不在备战席）
+          }
+          data.defenderIds = newDefenders;
+          data.lockedStatus[idx] = true;
+          saveData();
+          renderPkPage();
+          // 检查是否全部锁定，启用生成决赛按钮
+          const allLocked = data.lockedStatus.every(v => v === true);
+          generateFinalFromPkBtn.disabled = !allLocked;
+        });
+      });
+      document.querySelectorAll('[data-action="rechoose"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(btn.dataset.idx);
+          if (locked[idx]) return;
+          data.challengedOpponent[idx] = null;
+          saveData();
+          renderPkPage();
+        });
+      });
+      const allLocked = data.lockedStatus.every(v => v === true);
+      generateFinalFromPkBtn.disabled = !allLocked;
+    }
+
+    // 重置PK赛
+    resetPkBtn.addEventListener('click', () => {
+      const round = getCurrentPkRound();
+      if (!round || round.type !== 'pk') return;
+      if (!confirm('重置会将所有PK分数和挑战进度清空，回到初赛初始状态，确定吗？')) return;
+      const data = round.pkData;
+      const contestants = data.contestants;
+      // 重置选手分数
+      data.scores = {};
+      // 重置锁定状态和对手选择
+      data.lockedStatus = new Array(4).fill(false);
+      data.challengedOpponent = new Array(4).fill(null);
+      // 重置备战席和攻擂队列（按初赛3-6守擂，7-10攻擂且顺序从低到高）
+      const sorted = [...contestants].sort((a,b) => a.initialRank - b.initialRank);
+      const defenders = sorted.slice(0,4); // 3,4,5,6名
+      const attackers = sorted.slice(4,8);  // 7,8,9,10名
+      data.defenderIds = defenders.map(d => d.id);
+      data.attackerIds = attackers.map(a => a.id);
+      saveData();
+      renderPkPage();
+      generateFinalFromPkBtn.disabled = true;
+    });
+
+    // 生成决赛轮次
+    generateFinalFromPkBtn.addEventListener('click', () => {
+      const pkRound = getCurrentPkRound();
+      if (!pkRound || pkRound.type !== 'pk') return;
+      const data = pkRound.pkData;
+      const allLocked = data.lockedStatus.every(v => v === true);
+      if (!allLocked) {
+        alert('请先完成所有PK挑战');
+        return;
+      }
+      // 获取初赛前两名（需要从生成此PK赛的源轮次中获取，但这里简化：从所有普通轮次中找到名字包含？或直接让用户选择？）
+      // 更好方法：在生成PK赛时保存sourceRoundId
+      // 但为了简化，让用户手动选择包含前两名的普通轮次，或者从当前PK赛的contestants中无法得到前两名（因为只存了3-10名）
+      // 因此需要用户手动添加前两名。为了体验，弹窗让用户输入决赛选手（可手填id/name或从列表选）。
+      // 这里采用更实用的方法：让用户从当前PK赛的contestants之外手动添加两名选手，或者直接提供输入框。
+      const finalists = [...data.defenderIds]; // 备战席4人
+      const names = finalists.map(id => data.contestants.find(c => c.id === id).name).join(', ');
+      const additional = prompt(`最终备战席选手: ${names}\n请输入直接晋级的两位选手姓名（用逗号分隔）`, "选手X,选手Y");
+      if (!additional) return;
+      const extraNames = additional.split(',').map(s => s.trim()).filter(s => s);
+      if (extraNames.length !== 2) {
+        alert('需要恰好两位选手');
+        return;
+      }
+      // 创建决赛轮次
+      const finalRound = {
+        id: generateId(),
+        name: `${pkRound.name} - 决赛`,
+        type: 'normal',
+        createdAt: new Date().toISOString(),
+        judges: Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`),
+        players: []
+      };
+      // 添加PK赛胜出的4人
+      for (let id of finalists) {
+        const c = data.contestants.find(c => c.id === id);
+        if (c) finalRound.players.push({ id: c.id, name: c.name, scores: new Array(JUDGES_COUNT).fill(null) });
+      }
+      // 添加手动输入的两人（需要生成新id，避免冲突）
+      for (let name of extraNames) {
+        finalRound.players.push({ id: `F${Date.now()}-${Math.random()}`, name: name, scores: new Array(JUDGES_COUNT).fill(null) });
+      }
+      appData.rounds.push(finalRound);
+      saveData();
+      renderRoundList();
+      alert(`决赛轮次“${finalRound.name}”已创建，共有${finalRound.players.length}人`);
+      openDetail(finalRound.id);
+    });
+
+    backFromPkBtn.addEventListener('click', () => {
+      showMain();
+    });
+    pkRoundNameInput.addEventListener('input', () => {
+      const round = getCurrentPkRound();
+      if (round) { round.name = pkRoundNameInput.value; saveData(); renderRoundList(); }
+    });
+
+    loadData();
+    showMain();
+  })();
+</script>
+</body>
+</html>

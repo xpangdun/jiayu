@@ -1005,81 +1005,76 @@
 
     // ========== 生成决赛轮次（自动从源轮次获取前两名） ==========
     generateFinalFromPkBtn.addEventListener('click', () => {
-      const pkRound = getCurrentPkRound();
-      if (!pkRound || pkRound.type !== 'pk') return;
-      const data = pkRound.pkData;
-      const allLocked = data.lockedStatus.every(v => v === true);
-      if (!allLocked) {
-        alert('请先完成所有PK挑战');
-        return;
-      }
-      // 获取源轮次（初赛）中的前两名
-      const sourceRound = pkRound.sourceRoundId ? getRoundById(pkRound.sourceRoundId) : null;
-      let topTwoPlayers = [];
-      if (sourceRound && sourceRound.type === 'normal') {
-        const playersWithAvg = sourceRound.players.map(p => ({
-          ...p,
-          avg: getPlayerAvg(p)
-        })).filter(p => p.avg !== null);
-        const sorted = [...playersWithAvg].sort((a,b) => b.avg - a.avg);
-        topTwoPlayers = sorted.slice(0,2).map(p => ({ id: p.id, name: p.name }));
-      }
-      if (topTwoPlayers.length !== 2) {
-        alert('无法从初赛轮次获取前两名选手，请确保初赛已完成评分');
-        return;
-      }
-      const finalists = [...data.defenderIds];
-      const finalRound = {
-        id: generateId(),
-        name: `${pkRound.name} - 决赛`,
-        type: 'normal',
-        createdAt: new Date().toISOString(),
-        judges: Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`),
-        players: []
-      };
-      // 获取源轮次（初赛）的所有选手（按原始 players 数组顺序）
-const sourceRound = pkRound.sourceRoundId ? getRoundById(pkRound.sourceRoundId) : null;
-let orderedPlayers = [];
+  const pkRound = getCurrentPkRound();
+  if (!pkRound || pkRound.type !== 'pk') return;
+  const data = pkRound.pkData;
+  const allLocked = data.lockedStatus.every(v => v === true);
+  if (!allLocked) {
+    alert('请先完成所有PK挑战');
+    return;
+  }
+  const sourceRound = pkRound.sourceRoundId ? getRoundById(pkRound.sourceRoundId) : null;
+  let topTwoPlayers = [];
+  if (sourceRound && sourceRound.type === 'normal') {
+    const playersWithAvg = sourceRound.players.map(p => ({
+      ...p,
+      avg: getPlayerAvg(p)
+    })).filter(p => p.avg !== null);
+    const sorted = [...playersWithAvg].sort((a,b) => b.avg - a.avg);
+    topTwoPlayers = sorted.slice(0,2).map(p => ({ id: p.id, name: p.name }));
+  }
+  if (topTwoPlayers.length !== 2) {
+    alert('无法从初赛轮次获取前两名选手，请确保初赛已完成评分');
+    return;
+  }
+  const finalists = [...data.defenderIds];
+  const finalRound = {
+    id: generateId(),
+    name: `${pkRound.name} - 决赛`,
+    type: 'normal',
+    createdAt: new Date().toISOString(),
+    judges: Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`),
+    players: []
+  };
 
-if (sourceRound && sourceRound.type === 'normal') {
-  // 遍历源轮次的原始 players 数组顺序
-  for (let originalPlayer of sourceRound.players) {
-    // 检查该选手是否是初赛前两名 或者 PK赛胜出者
-    const isTopTwo = topTwoPlayers.some(tp => tp.id === originalPlayer.id);
-    const isWinner = finalists.some(fid => fid === originalPlayer.id);
-    if (isTopTwo || isWinner) {
-      orderedPlayers.push({
-        id: originalPlayer.id,
-        name: originalPlayer.name,
-        scores: new Array(JUDGES_COUNT).fill(null)
-      });
+  // 按源轮次的原始 players 数组顺序添加选手
+  let orderedPlayers = [];
+  if (sourceRound && sourceRound.type === 'normal') {
+    for (let originalPlayer of sourceRound.players) {
+      const isTopTwo = topTwoPlayers.some(tp => tp.id === originalPlayer.id);
+      const isWinner = finalists.some(fid => fid === originalPlayer.id);
+      if (isTopTwo || isWinner) {
+        orderedPlayers.push({
+          id: originalPlayer.id,
+          name: originalPlayer.name,
+          scores: new Array(JUDGES_COUNT).fill(null)
+        });
+      }
     }
   }
-}
 
-// 如果因为某些原因（比如选手id不匹配）没有收集全，再补充遗漏的
-if (orderedPlayers.length !== 6) {
-  // 回退到原来的方式
-  for (let p of topTwoPlayers) {
-    if (!orderedPlayers.some(op => op.id === p.id)) {
-      orderedPlayers.push({ id: p.id, name: p.name, scores: new Array(JUDGES_COUNT).fill(null) });
+  // 补充遗漏（容错）
+  if (orderedPlayers.length !== 6) {
+    for (let p of topTwoPlayers) {
+      if (!orderedPlayers.some(op => op.id === p.id)) {
+        orderedPlayers.push({ id: p.id, name: p.name, scores: new Array(JUDGES_COUNT).fill(null) });
+      }
+    }
+    for (let id of finalists) {
+      if (!orderedPlayers.some(op => op.id === id)) {
+        const c = data.contestants.find(c => c.id === id);
+        if (c) orderedPlayers.push({ id: c.id, name: c.name, scores: new Array(JUDGES_COUNT).fill(null) });
+      }
     }
   }
-  for (let id of finalists) {
-    if (!orderedPlayers.some(op => op.id === id)) {
-      const c = data.contestants.find(c => c.id === id);
-      if (c) orderedPlayers.push({ id: c.id, name: c.name, scores: new Array(JUDGES_COUNT).fill(null) });
-    }
-  }
-}
 
-finalRound.players = orderedPlayers;
-      appData.rounds.push(finalRound);
-      saveData();
-      renderRoundList();
-      alert(`决赛轮次“${finalRound.name}”已创建，共有${finalRound.players.length}人（初赛前2名 + PK赛胜出4人）`);
-      openDetail(finalRound.id);
-    });
+  finalRound.players = orderedPlayers;
+  appData.rounds.push(finalRound);
+  saveData();
+  renderRoundList();
+  alert(`决赛轮次“${finalRound.name}”已创建，共有${finalRound.players.length}人（按初赛原始顺序排列）`);
+  openDetail(finalRound.id);
+});
 
     backFromPkBtn.addEventListener('click', () => {
       showMain();

@@ -1037,15 +1037,43 @@
         judges: Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`),
         players: []
       };
-      // 添加初赛前两名
-      for (let p of topTwoPlayers) {
-        finalRound.players.push({ id: p.id, name: p.name, scores: new Array(JUDGES_COUNT).fill(null) });
-      }
-      // 添加PK赛胜出的4人
-      for (let id of finalists) {
-        const c = data.contestants.find(c => c.id === id);
-        if (c) finalRound.players.push({ id: c.id, name: c.name, scores: new Array(JUDGES_COUNT).fill(null) });
-      }
+      // 获取源轮次（初赛）的所有选手（按原始 players 数组顺序）
+const sourceRound = pkRound.sourceRoundId ? getRoundById(pkRound.sourceRoundId) : null;
+let orderedPlayers = [];
+
+if (sourceRound && sourceRound.type === 'normal') {
+  // 遍历源轮次的原始 players 数组顺序
+  for (let originalPlayer of sourceRound.players) {
+    // 检查该选手是否是初赛前两名 或者 PK赛胜出者
+    const isTopTwo = topTwoPlayers.some(tp => tp.id === originalPlayer.id);
+    const isWinner = finalists.some(fid => fid === originalPlayer.id);
+    if (isTopTwo || isWinner) {
+      orderedPlayers.push({
+        id: originalPlayer.id,
+        name: originalPlayer.name,
+        scores: new Array(JUDGES_COUNT).fill(null)
+      });
+    }
+  }
+}
+
+// 如果因为某些原因（比如选手id不匹配）没有收集全，再补充遗漏的
+if (orderedPlayers.length !== 6) {
+  // 回退到原来的方式
+  for (let p of topTwoPlayers) {
+    if (!orderedPlayers.some(op => op.id === p.id)) {
+      orderedPlayers.push({ id: p.id, name: p.name, scores: new Array(JUDGES_COUNT).fill(null) });
+    }
+  }
+  for (let id of finalists) {
+    if (!orderedPlayers.some(op => op.id === id)) {
+      const c = data.contestants.find(c => c.id === id);
+      if (c) orderedPlayers.push({ id: c.id, name: c.name, scores: new Array(JUDGES_COUNT).fill(null) });
+    }
+  }
+}
+
+finalRound.players = orderedPlayers;
       appData.rounds.push(finalRound);
       saveData();
       renderRoundList();

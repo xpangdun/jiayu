@@ -168,38 +168,38 @@
     }
     .pk-defenders-area {
       background: #fefce8;
-      border-radius: 24px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 14px 0px 8px;
       border: 1px solid #fde68a;
     }
     .pk-defenders-area h3 {
       font-size: 1rem;
       font-weight: 600;
-      margin-bottom: 12px;
-      color: #854d0e;
+      margin-bottom: 10px;
+      color: #854d0e; text-align: center;
     }
-    .defenders-grid {
+    .defenders-grid {       /*备战席*/
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
+      gap: 8px;
+      justify-content: center; 
     }
     .defender-card {
       background: white;
-      border-radius: 16px;
-      padding: 8px 16px;
-      min-width: 100px;
+      border-radius: 10px;
+      padding: 5px 0px;
+      min-width: 80px;
       text-align: center;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       border: 1px solid #fcd34d;
     }
     .defender-name {
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 1rem; height:24px;
     }
     .defender-rank {
       font-size: 0.7rem;
-      color: #b45309;
+      color: #b45309; 
     }
     .attacker-list {
       display: flex;
@@ -208,7 +208,7 @@
     }
     .attacker-card {
       background: #f9fafb;
-      border-radius: 20px;
+      border-radius: 10px;
       padding: 12px;
       border: 1px solid #e5e7eb;
       transition: all 0.2s;
@@ -475,7 +475,7 @@
       if (!appData.rounds.length) {
         appData.rounds.push({
           id: generateId(), name: '普通淘汰赛1', type: 'normal',
-          judges: ['张老师','李老师','王老师','赵老师','陈老师'],
+          judges: ['鸡','魏','夹','田','陶'],
           players: [
             { id:'01', name:'选手A', scores: [null,null,null,null,null] },
             { id:'02', name:'选手B', scores: [null,null,null,null,null] },
@@ -703,7 +703,7 @@
     document.getElementById('addPlayerInModalBtn').addEventListener('click', () => {
       const round = getCurrentRound();
       if (!round) return;
-      round.players.push({ id: `P${round.players.length+1}`, name: '新选手', scores: new Array(JUDGES_COUNT).fill(null) });
+      round.players.push({ id: `${round.players.length+1}`, name: '选手', scores: new Array(JUDGES_COUNT).fill(null) });
       renderPlayerEditList(round);
     });
     document.getElementById('saveManageBtn').addEventListener('click', () => {
@@ -873,7 +873,7 @@
 
       pkContainer.innerHTML = `
         <div class="pk-defenders-area">
-          <h3>🏆 当前备战席（守擂方）</h3>
+          <h3>🏆 当前备战席</h3>
           <div class="defenders-grid">${defendersHtml || '<div>暂无</div>'}</div>
         </div>
         <div class="attacker-list">${attackersHtml}</div>

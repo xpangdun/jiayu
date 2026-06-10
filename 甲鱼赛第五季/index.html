@@ -186,19 +186,19 @@
     }
     .defender-card {
       background: white;
-      border-radius: 10px;
+      border-radius: 8px;
       padding: 5px 0px;
-      min-width: 80px;
+      min-width: 72px;
       text-align: center;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       border: 1px solid #fcd34d;
     }
     .defender-name {
       font-weight: 700;
-      font-size: 1rem; height:24px;
+      font-size: 0.85rem; height:22px;
     }
     .defender-rank {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       color: #b45309; 
     }
     .attacker-list {
@@ -206,10 +206,11 @@
       flex-direction: column;
       gap: 16px;
     }
+    
     .attacker-card {
       background: #f9fafb;
       border-radius: 10px;
-      padding: 12px;
+      padding: 8px;
       border: 1px solid #e5e7eb;
       transition: all 0.2s;
     }
@@ -218,6 +219,55 @@
       border-color: #a5b4fc;
       opacity: 0.8;
     }
+    /* PK卡牌左中右布局 */
+.pk-left, .pk-middle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;  /* 左列和中列平均分配剩余宽度 */
+}
+.pk-left {
+  align-items: flex-start;
+}
+.pk-middle {
+  align-items: center;
+}
+.pk-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.7rem;
+  color: #ef4444;
+  background: #fef2f2;
+  border-radius: 8px;
+  padding: 0 px;
+  margin: 0px;
+  /* 固定宽度，不被 flex 拉伸 */
+  flex-shrink: 0;
+  width: auto;
+  min-width: 24px;
+}
+.pk-right {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  /* 不设置 flex:1，宽度由内容决定 */
+  flex-shrink: 0;
+}
+.attacker-card {
+  display: flex !important;
+  gap: 12px;
+  align-items: stretch;
+  justify-content: space-between;
+}
+.attacker-score-input, .opponent-score-input {
+  width: 100%;
+  max-width: 100px;
+}  /* PK卡牌左中右布局结束位置 */
+    
     .attacker-main {
       display: flex;
       flex-wrap: wrap;
@@ -836,40 +886,64 @@
       }).join('');
 
       const attackersHtml = attackerIds.map((attId, idx) => {
-        const att = contestants.find(c => c.id === attId);
-        if (!att) return '';
-        const isLocked = locked[idx];
-        const chosenOppId = challengedOpp[idx];
-        const chosenOpp = chosenOppId ? contestants.find(c => c.id === chosenOppId) : null;
-        const attScore = scores[attId] !== undefined ? scores[attId] : '';
-        const oppScore = chosenOppId && scores[chosenOppId] !== undefined ? scores[chosenOppId] : '';
+  const att = contestants.find(c => c.id === attId);
+  if (!att) return '';
+  const isLocked = locked[idx];
+  const chosenOppId = challengedOpp[idx];
+  const chosenOpp = chosenOppId ? contestants.find(c => c.id === chosenOppId) : null;
+  const attScore = scores[attId] !== undefined ? scores[attId] : '';
+  const oppScore = chosenOppId && scores[chosenOppId] !== undefined ? scores[chosenOppId] : '';
 
-        return `
-          <div class="attacker-card ${isLocked ? 'locked' : ''}" data-attacker-index="${idx}">
-            <div class="attacker-main">
-              <div class="attacker-info">
-                <div class="attacker-name">${att.name}</div>
-                <div class="attacker-rank">初赛第${att.initialRank}名</div>
-              </div>
-              <input type="text" class="attacker-score-input" data-attacker-id="${attId}" value="${attScore}" placeholder="分数" ${isLocked ? 'disabled' : ''}>
-              ${!chosenOppId ? `<button class="btn btn-sm select-opponent-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''}>选择对手</button>` : ''}
-            </div>
-            ${chosenOpp ? `
-              <div class="opponent-area">
-                <div class="opponent-info">
-                  <div class="opponent-name">🎤 对手: ${chosenOpp.name}</div>
-                  <div class="opponent-rank">初赛第${chosenOpp.initialRank}名</div>
-                </div>
-                <input type="text" class="opponent-score-input" data-opponent-id="${chosenOppId}" value="${oppScore}" placeholder="对手分数" ${isLocked ? 'disabled' : ''}>
-                <div class="action-buttons">
-                  <button class="icon-btn lock-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''}>🔒</button>
-                  <button class="icon-btn" data-idx="${idx}" data-action="rechoose" ${isLocked ? 'disabled' : ''}>🔄</button>
-                </div>
-              </div>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
+  // 左列：攻擂方信息
+  const leftColumn = `
+    <div class="pk-left">
+      <div class="attacker-name">${att.name}</div>
+      <div class="attacker-rank">初赛第${att.initialRank}名</div>
+      <input type="text" class="attacker-score-input" data-attacker-id="${attId}" value="${attScore}" placeholder="分数" ${isLocked ? 'disabled' : ''}>
+    </div>
+  `;
+
+  // VS 列（固定宽度，居中显示）
+  const vsColumn = `<div class="pk-vs">攻打</div>`;
+
+  let middleColumn = '';
+  let rightColumn = '';
+
+  if (chosenOpp) {
+    // 中列：对手信息
+    middleColumn = `
+      <div class="pk-middle">
+        <div class="opponent-name">🎤 ${chosenOpp.name}</div>
+        <div class="opponent-rank">初赛第${chosenOpp.initialRank}名</div>
+        <input type="text" class="opponent-score-input" data-opponent-id="${chosenOppId}" value="${oppScore}" placeholder="对手分数" ${isLocked ? 'disabled' : ''}>
+      </div>
+    `;
+    // 右列：操作按钮（不设 flex:1，由内容撑开）
+    rightColumn = `
+      <div class="pk-right">
+        <button class="icon-btn" data-idx="${idx}" data-action="rechoose" ${isLocked ? 'disabled' : ''} title="重选对手">🔄</button>
+        <button class="icon-btn lock-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''} title="锁定">🔒</button>
+      </div>
+    `;
+  } else {
+    // 未选择对手时，中列和右列处理
+    middleColumn = `<div class="pk-middle"></div>`;
+    rightColumn = `
+      <div class="pk-right">
+        <button class="btn btn-sm select-opponent-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''}>选择对手</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="attacker-card ${isLocked ? 'locked' : ''}" data-attacker-index="${idx}">
+      ${leftColumn}
+      ${vsColumn}
+      ${middleColumn}
+      ${rightColumn}
+    </div>
+  `;
+}).join('');
 
       pkContainer.innerHTML = `
         <div class="pk-defenders-area">

@@ -69,7 +69,7 @@
     }
     .btn-primary { background: #1e2b4f; border-color: #1e2b4f; color: white; }
     .btn-outline { background: none; border:none; }
-    .btn-sm { padding: 6px 14px; font-size: 0.8rem; border-radius: 20px; }
+    .btn-sm { padding: 6px 14px; font-size: 0.8rem; border-radius: 20px; background: #def0ff; flex:1;  } /*选择对手按钮*/
     .btn-danger { background: #ef4444; color: white; border: none; }
 
     /* 普通详情页 (保持不变) */
@@ -281,7 +281,7 @@
     }
     .attacker-name {
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.85rem;
     }
     .attacker-rank {
       font-size: 0.7rem;
@@ -310,6 +310,7 @@
     }
     .opponent-name {
       font-weight: 600;
+      font-size: 0.85rem;
     }
     .opponent-rank {
       font-size: 0.7rem;
@@ -926,14 +927,14 @@
       </div>
     `;
   } else {
-    // 未选择对手时，中列和右列处理
-    middleColumn = `<div class="pk-middle"></div>`;
-    rightColumn = `
-      <div class="pk-right">
-        <button class="btn btn-sm select-opponent-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''}>选择对手</button>
-      </div>
-    `;
-  }
+  // 未选择对手：中间显示选择对手按钮，右边为空
+  middleColumn = `
+    <div class="pk-middle">
+      <button class="btn btn-sm select-opponent-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''}>选择对手</button>
+    </div>
+  `;
+  rightColumn = `<div class="pk-right"></div>`;
+}
 
   return `
     <div class="attacker-card ${isLocked ? 'locked' : ''}" data-attacker-index="${idx}">

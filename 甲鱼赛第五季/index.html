@@ -72,7 +72,7 @@
     .btn-sm { padding: 4px 10px; font-size: 0.75rem; border-radius: 20px; }
     .btn-danger { background: #ef4444; color: white; border: none; }
 
-    /* 普通详情页 (保留原有样式) */
+    /* 普通详情页 */
     .detail-header { display: flex; align-items: center; gap: 12px; }
     .back-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #1e2b4f; }
     .round-title { flex:1; font-weight:650; font-size:1.3rem; display:flex; align-items:center; gap:6px; }
@@ -175,7 +175,7 @@
       flex:1; overflow-y: auto; padding: 12px 16px;
     }
     .assign-section {
-      background: white; border-radius: 20px; margin-bottom: 20px; padding: 12px;
+      background: white; border-radius: 20px; margin-bottom: 16px; padding: 12px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     .assign-section h4 {
@@ -203,7 +203,7 @@
     .assign-icon-btn:active { background: #e5e7eb; }
     .error-msg { color: #ef4444; font-size: 0.75rem; margin-top: 8px; text-align: center; }
 
-    /* PK赛详情页样式（保留原有） */
+    /* PK赛详情页样式 */
     .pk-container {
       display: flex;
       flex-direction: column;
@@ -472,7 +472,7 @@
 
     function getPlayerAvg(player) { return player?.scores ? calculateAverage(player.scores) : null; }
 
-    // 新增：正确计算排名（同分同名次，跳跃）
+    // 正确计算排名（同分同名次，跳跃）
     function computeRanks(playersWithAvg) {
       const sorted = [...playersWithAvg].sort((a,b) => b.avg - a.avg);
       let ranks = [];
@@ -798,14 +798,13 @@
       renderRoundList();
     });
 
-    // ========== 生成 PK 赛分配界面 ==========
+    // ========== 生成 PK 赛分配界面（四个区域） ==========
     generatePkBtn.addEventListener('click', () => {
       const round = getCurrentRound();
       if (!round || round.type !== 'normal') {
         alert('请先打开一个普通淘汰赛轮次');
         return;
       }
-      // 计算每个选手的平均分和排名
       const playersWithAvg = round.players.map(p => ({
         ...p,
         avg: getPlayerAvg(p)
@@ -819,30 +818,31 @@
         const rankObj = ranks.find(r => r.id === p.id);
         return { ...p, rank: rankObj.rank };
       }).sort((a,b) => a.rank - b.rank); // 按排名升序
-      // 初始分配
-      let finalists = fullList.filter(p => p.rank <= 2); // 排名1-2直接晋级
+
+      // 初始分配：晋级区 rank<=2；剩余选手按分数从高到低排序
+      let finalists = fullList.filter(p => p.rank <= 2);
       let remaining = fullList.filter(p => p.rank > 2);
+      remaining.sort((a,b) => b.avg - a.avg);
       let defenders = remaining.slice(0,4);
-      let attackers = remaining.slice(4);
-      attackers.sort((a,b) => b.avg - a.avg); // 分数从高到低？实际我们要低分先攻，所以最终显示时低分在上方，便于理解
-      // 但为了符合“低分先攻”，我们在分配界面上把攻擂区按分数从低到高排序
+      let attackers = remaining.slice(4,8);
+      let eliminated = remaining.slice(8);
+      // 攻擂区按分数从低到高排序（低分先攻）
       attackers.sort((a,b) => a.avg - b.avg);
-      // 显示分配界面
-      showAssignPanel(fullList, finalists, defenders, attackers);
+
+      showAssignPanel(fullList, finalists, defenders, attackers, eliminated);
     });
 
-    function showAssignPanel(allPlayers, finalists, defenders, attackers) {
-      // 构建三个区域的可变数组
+    function showAssignPanel(allPlayers, finalists, defenders, attackers, eliminated) {
       let finalList = [...finalists];
       let defendList = [...defenders];
       let attackList = [...attackers];
+      let eliminatedList = [...eliminated];
 
       function renderAssign() {
-        // 注意：allPlayers 用于校验，但不直接渲染
-        const renderSection = (title, list, type) => {
+        const renderSection = (title, list, type, minMsg = '') => {
           return `
             <div class="assign-section">
-              <h4>${title}</h4>
+              <h4>${title} ${minMsg}</h4>
               <div class="assign-list" data-type="${type}">
                 ${list.map((p, idx) => `
                   <div class="assign-card" data-id="${p.id}" data-type="${type}" data-idx="${idx}">
@@ -864,6 +864,7 @@
           ${renderSection('🏆 直接晋级区 (决赛)', finalList, 'final')}
           ${renderSection('🛡️ 守擂区 (备战席) - 至少3人', defendList, 'defend')}
           ${renderSection('⚔️ 攻擂区 (挑战顺序从上到下) - 至少1人', attackList, 'attack')}
+          ${renderSection('❌ 淘汰区 (不参与后续)', eliminatedList, 'eliminated')}
           <div class="error-msg" id="assignError"></div>
         `;
         // 绑定移动按钮
@@ -871,9 +872,10 @@
           btn.addEventListener('click', (e) => {
             const type = btn.dataset.type;
             const idx = parseInt(btn.dataset.idx);
-            if (type === 'final') moveItem(finalList, idx, idx-1, finalList, defendList, attackList);
-            else if (type === 'defend') moveItem(defendList, idx, idx-1, finalList, defendList, attackList);
-            else if (type === 'attack') moveItem(attackList, idx, idx-1, finalList, defendList, attackList);
+            if (type === 'final') moveItem(finalList, idx, idx-1, finalList, defendList, attackList, eliminatedList);
+            else if (type === 'defend') moveItem(defendList, idx, idx-1, finalList, defendList, attackList, eliminatedList);
+            else if (type === 'attack') moveItem(attackList, idx, idx-1, finalList, defendList, attackList, eliminatedList);
+            else if (type === 'eliminated') moveItem(eliminatedList, idx, idx-1, finalList, defendList, attackList, eliminatedList);
             renderAssign();
           });
         });
@@ -881,20 +883,20 @@
           btn.addEventListener('click', (e) => {
             const type = btn.dataset.type;
             const idx = parseInt(btn.dataset.idx);
-            if (type === 'final') moveItem(finalList, idx, idx+1, finalList, defendList, attackList);
-            else if (type === 'defend') moveItem(defendList, idx, idx+1, finalList, defendList, attackList);
-            else if (type === 'attack') moveItem(attackList, idx, idx+1, finalList, defendList, attackList);
+            if (type === 'final') moveItem(finalList, idx, idx+1, finalList, defendList, attackList, eliminatedList);
+            else if (type === 'defend') moveItem(defendList, idx, idx+1, finalList, defendList, attackList, eliminatedList);
+            else if (type === 'attack') moveItem(attackList, idx, idx+1, finalList, defendList, attackList, eliminatedList);
+            else if (type === 'eliminated') moveItem(eliminatedList, idx, idx+1, finalList, defendList, attackList, eliminatedList);
             renderAssign();
           });
         });
       }
 
-      function moveItem(arr, from, to, finalArr, defendArr, attackArr) {
+      function moveItem(arr, from, to, finalArr, defendArr, attackArr, elimArr) {
         if (to < 0 || to >= arr.length) {
-          // 边界跨越：尝试移动区域
-          if (arr === finalArr && to === -1) return; // 晋级区向上不能移
+          // 边界跨越
+          if (arr === finalArr && to === -1) return;
           if (arr === finalArr && to === arr.length) {
-            // 晋级区最后一位向下 -> 移到守擂区顶部
             if (defendArr.length >= 0) {
               const moved = arr.splice(from,1)[0];
               defendArr.unshift(moved);
@@ -903,12 +905,10 @@
           }
           if (arr === defendArr) {
             if (to === -1) {
-              // 守擂区第一位向上 -> 移到晋级区底部
               const moved = arr.splice(from,1)[0];
               finalArr.push(moved);
               return;
             } else if (to === arr.length) {
-              // 守擂区最后一位向下 -> 移到攻擂区顶部
               const moved = arr.splice(from,1)[0];
               attackArr.unshift(moved);
               return;
@@ -916,15 +916,24 @@
           }
           if (arr === attackArr) {
             if (to === -1) {
-              // 攻擂区第一位向上 -> 移到守擂区底部
               const moved = arr.splice(from,1)[0];
               defendArr.push(moved);
+              return;
+            } else if (to === arr.length) {
+              const moved = arr.splice(from,1)[0];
+              elimArr.unshift(moved);
+              return;
+            }
+          }
+          if (arr === elimArr) {
+            if (to === -1) {
+              const moved = arr.splice(from,1)[0];
+              attackArr.push(moved);
               return;
             } else if (to === arr.length) return;
           }
           return;
         }
-        // 区域内移动
         [arr[from], arr[to]] = [arr[to], arr[from]];
       }
 
@@ -937,7 +946,6 @@
           document.getElementById('assignError').innerText = '攻擂区至少需要1人，请调整';
           return false;
         }
-        // 生成 PK 赛轮次
         const round = getCurrentRound();
         const pkRound = {
           id: generateId(),
@@ -946,9 +954,9 @@
           createdAt: new Date().toISOString(),
           sourceRoundId: round.id,
           pkData: {
-            contestants: [...finalList, ...defendList, ...attackList].map(p => ({ id: p.id, name: p.name, initialRank: p.rank })),
+            contestants: [...defendList, ...attackList].map(p => ({ id: p.id, name: p.name, initialRank: p.rank })),
             defenderIds: defendList.map(d => d.id),
-            attackerIds: attackList.map(a => a.id),  // 顺序已由用户排序决定
+            attackerIds: attackList.map(a => a.id),
             lockedStatus: new Array(attackList.length).fill(false),
             challengedOpponent: new Array(attackList.length).fill(null),
             scores: {}
@@ -971,7 +979,7 @@
       pkAssignOverlay.classList.remove('active');
     });
 
-    // ========== PK赛详情页渲染与逻辑（保留原有，仅攻擂顺序来自pkData.attackerIds） ==========
+    // ========== PK赛详情页渲染与逻辑 ==========
     function openPkDetail(roundId) {
       currentPkRoundId = roundId;
       const round = getCurrentPkRound();
@@ -1058,7 +1066,7 @@
         <div class="attacker-list">${attackersHtml}</div>
       `;
 
-      // 绑定事件（与之前相同）
+      // 绑定事件
       document.querySelectorAll('.attacker-score-input').forEach(inp => {
         inp.addEventListener('change', (e) => {
           const attId = inp.dataset.attackerId;
@@ -1169,11 +1177,9 @@
       if (!round || round.type !== 'pk') return;
       if (!confirm('重置会将所有PK分数和挑战进度清空，回到分配时的初始状态，确定吗？')) return;
       const data = round.pkData;
-      // 重置分数
       data.scores = {};
       data.lockedStatus = new Array(data.attackerIds.length).fill(false);
       data.challengedOpponent = new Array(data.attackerIds.length).fill(null);
-      // defenderIds 和 attackerIds 保持不变（用户分配时的状态）
       saveData();
       renderPkPage();
       generateFinalFromPkBtn.disabled = true;
@@ -1193,7 +1199,7 @@
         alert('无法找到初赛轮次');
         return;
       }
-      // 获取分配时直接晋级的选手（pkData.contestants中不包含晋级选手，需从源轮次中根据排名≤2取得）
+      // 获取直接晋级区的选手（根据初赛排名≤2）
       const playersWithAvg = sourceRound.players.map(p => ({ ...p, avg: getPlayerAvg(p) })).filter(p => p.avg !== null);
       const ranks = computeRanks(playersWithAvg);
       const fullWithRank = playersWithAvg.map(p => ({ ...p, rank: ranks.find(r => r.id === p.id).rank }));

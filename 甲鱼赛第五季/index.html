@@ -45,21 +45,21 @@
     .round-list { display: flex; flex-direction: column; gap: 12px; }
     .round-card {
       background: #f9fafb; border: 1px solid #eef1f6; border-radius: 20px;
-      padding: 16px; display: flex; justify-content: space-between; align-items: center;
+      padding: 12px; display: flex; justify-content: space-between; align-items: center;
       cursor: pointer; transition: 0.2s;
     }
     .round-card:active { background: #f0f2f8; }
-    .round-info h3 { font-size: 1.1rem; font-weight: 650; color: #1f2937; }
-    .round-info p { font-size: 0.8rem; color: #6b7280; margin-top: 4px; }
-    .round-time { font-size: 0.7rem; color: #9ca3af; margin-top: 2px; }
-    .btn-icon { background: none; border: none; font-size: 1.3rem; cursor: pointer; padding: 6px; color: #6b7280; }
+    .round-info h3 { font-size: 1rem; font-weight: 650; color: #1f2937; }
+    .round-info p { font-size: 0.75rem; color: #6b7280; margin-top: 4px; }
+    .round-time { font-size: 0.65rem; color: #9ca3af; margin-top: 2px; }
+    .btn-icon { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 4px; color: #6b7280; }
     .btn {
       background: #f9fafb;
       border: 0px solid #d1d5db;
-      padding: 10px 16px;
+      padding: 8px 14px;
       border-radius: 40px;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
@@ -68,11 +68,11 @@
       transition: 0.2s;
     }
     .btn-primary { background: #1e2b4f; border-color: #1e2b4f; color: white; }
-    .btn-outline { background: none; border:none; }
-    .btn-sm { padding: 6px 14px; font-size: 0.8rem; border-radius: 20px; background: #def0ff; flex:1;  } /*选择对手按钮*/
+    .btn-outline { background: none; border: 1px solid #d1d5db; }
+    .btn-sm { padding: 4px 10px; font-size: 0.75rem; border-radius: 20px; }
     .btn-danger { background: #ef4444; color: white; border: none; }
 
-    /* 普通详情页 (保持不变) */
+    /* 普通详情页 (保留原有样式) */
     .detail-header { display: flex; align-items: center; gap: 12px; }
     .back-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #1e2b4f; }
     .round-title { flex:1; font-weight:650; font-size:1.3rem; display:flex; align-items:center; gap:6px; }
@@ -119,13 +119,13 @@
     .ranking-list { display: flex; flex-direction: column; gap: 8px; }
     .rank-item {
       display: flex; align-items: center; background: #f8fafd; border-radius: 18px;
-      padding: 10px 14px; border: 1px solid #eef1f6; gap: 8px;
+      padding: 8px 12px; border: 1px solid #eef1f6; gap: 8px;
     }
-    .rank-num { font-weight: 700; font-size: 1.2rem; width: 32px; color: #FF7295; }
+    .rank-num { font-weight: 700; font-size: 1.1rem; width: 32px; color: #FF7295; }
     .rank-name { flex: 1; font-weight: 600; }
-    .rank-avg { font-weight: 700; background: #eef2ff; padding: 4px 12px; border-radius: 20px; }
+    .rank-avg { font-weight: 700; background: #eef2ff; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
 
-    /* 管理面板 (原有样式不动) */
+    /* 管理面板 (原有) */
     .modal-overlay {
       position: fixed; top:0; left:0; width:100%; height:100%;
       background: rgba(0,0,0,0.4); display:none; align-items:flex-end; justify-content:center; z-index:100;
@@ -160,202 +160,161 @@
     }
     .flex-row { display:flex; justify-content:space-between; align-items:center; }
 
-    /* ========== PK赛详情页全新样式 ========== */
+    /* PK赛分配界面 */
+    .pk-assign-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: #f5f7fb; display:none; flex-direction: column; z-index:200;
+    }
+    .pk-assign-overlay.active { display: flex; }
+    .pk-assign-header {
+      background: white; padding: 12px 16px; border-bottom: 1px solid #e5e7eb;
+      display: flex; justify-content: space-between; align-items: center;
+      position: sticky; top:0; z-index:10;
+    }
+    .pk-assign-content {
+      flex:1; overflow-y: auto; padding: 12px 16px;
+    }
+    .assign-section {
+      background: white; border-radius: 20px; margin-bottom: 20px; padding: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .assign-section h4 {
+      font-size: 0.9rem; font-weight: 600; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 2px solid #e5e7eb;
+    }
+    .assign-list {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .assign-card {
+      background: #f9fafb; border-radius: 12px; padding: 6px 10px;
+      display: flex; align-items: center; justify-content: space-between;
+      border: 1px solid #edf0f5;
+    }
+    .assign-card-info {
+      display: flex; flex-direction: column; gap: 2px; flex:1;
+    }
+    .assign-card-name { font-weight: 600; font-size: 0.85rem; }
+    .assign-card-score { font-size: 0.7rem; color: #6b7280; }
+    .assign-card-actions {
+      display: flex; gap: 6px;
+    }
+    .assign-icon-btn {
+      background: none; border: none; font-size: 1rem; cursor: pointer; padding: 4px 6px; border-radius: 20px;
+    }
+    .assign-icon-btn:active { background: #e5e7eb; }
+    .error-msg { color: #ef4444; font-size: 0.75rem; margin-top: 8px; text-align: center; }
+
+    /* PK赛详情页样式（保留原有） */
     .pk-container {
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 20px;
     }
     .pk-defenders-area {
       background: #fefce8;
-      border-radius: 16px;
-      padding: 14px 0px 8px;
+      border-radius: 24px;
+      padding: 12px;
       border: 1px solid #fde68a;
     }
     .pk-defenders-area h3 {
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 600;
       margin-bottom: 10px;
-      color: #854d0e; text-align: center;
+      color: #854d0e;
     }
-    .defenders-grid {       /*备战席*/
+    .defenders-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center; 
+      gap: 10px;
+      justify-content: center;
     }
     .defender-card {
       background: white;
-      border-radius: 8px;
-      padding: 5px 0px;
-      min-width: 72px;
+      border-radius: 16px;
+      padding: 6px 12px;
+      min-width: 80px;
       text-align: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       border: 1px solid #fcd34d;
     }
     .defender-name {
       font-weight: 700;
-      font-size: 0.85rem; height:22px;
+      font-size: 0.85rem;
     }
     .defender-rank {
-      font-size: 0.65rem;
-      color: #b45309; 
+      font-size: 0.6rem;
+      color: #b45309;
     }
     .attacker-list {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
     }
-    
     .attacker-card {
       background: #f9fafb;
-      border-radius: 10px;
-      padding: 8px;
+      border-radius: 16px;
+      padding: 10px;
       border: 1px solid #e5e7eb;
-      transition: all 0.2s;
     }
     .attacker-card.locked {
       background: #eef2ff;
       border-color: #a5b4fc;
       opacity: 0.8;
     }
-    /* PK卡牌左中右布局 */
-.pk-left, .pk-middle {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;  /* 左列和中列平均分配剩余宽度 */
-}
-.pk-left {
-  align-items: flex-start;
-}
-.pk-middle {
-  align-items: center;
-}
-.pk-vs {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.7rem;
-  color: #ef4444;
-  background: #fef2f2;
-  border-radius: 8px;
-  padding: 0 px;
-  margin: 0px;
-  /* 固定宽度，不被 flex 拉伸 */
-  flex-shrink: 0;
-  width: auto;
-  min-width: 24px;
-}
-.pk-right {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  justify-content: center;
-  /* 不设置 flex:1，宽度由内容决定 */
-  flex-shrink: 0;
-}
-.attacker-card {
-  display: flex !important;
-  gap: 12px;
-  align-items: stretch;
-  justify-content: space-between;
-}
-.attacker-score-input, .opponent-score-input {
-  width: 100%;
-  max-width: 100px;
-}  /* PK卡牌左中右布局结束位置 */
-    
-    .attacker-main {
+    .pk-left, .pk-middle, .pk-right {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .pk-left, .pk-middle {
+      flex: 1;
+    }
+    .pk-left { align-items: flex-start; }
+    .pk-middle { align-items: center; }
+    .pk-vs {
+      display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    .attacker-info {
-      flex: 2;
-      min-width: 120px;
-    }
-    .attacker-name {
+      justify-content: center;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 1rem;
+      color: #ef4444;
+      background: #fef2f2;
+      border-radius: 20px;
+      padding: 0 8px;
+      flex-shrink: 0;
+      min-width: 40px;
     }
-    .attacker-rank {
-      font-size: 0.7rem;
-      color: #6b7280;
-    }
-    .attacker-score-input {
-      width: 80px;
-      padding: 6px 8px;
-      border: 1px solid #d1d5db;
-      border-radius: 12px;
-      text-align: center;
-      font-weight: 600;
-    }
-    .opponent-area {
+    .pk-right {
+      flex-shrink: 0;
       display: flex;
+      flex-direction: column;
+      gap: 6px;
       align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      background: #fef9e3;
-      padding: 8px 12px;
-      border-radius: 16px;
-      margin-top: 8px;
+      justify-content: center;
     }
-    .opponent-info {
-      flex: 2;
-    }
-    .opponent-name {
-      font-weight: 600;
-      font-size: 0.85rem;
-    }
-    .opponent-rank {
-      font-size: 0.7rem;
-      color: #6b7280;
-    }
-    .opponent-score-input {
+    .attacker-name, .opponent-name { font-weight: 700; font-size: 0.85rem; }
+    .attacker-rank, .opponent-rank { font-size: 0.65rem; color: #6b7280; }
+    .attacker-score-input, .opponent-score-input {
       width: 80px;
-      padding: 6px 8px;
+      padding: 4px 6px;
       border: 1px solid #d1d5db;
-      border-radius: 12px;
+      border-radius: 10px;
       text-align: center;
-      font-weight: 600;
-    }
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-      align-items: center;
+      font-size: 0.8rem;
     }
     .icon-btn {
       background: none;
       border: none;
-      font-size: 1.3rem;
+      font-size: 1.1rem;
       cursor: pointer;
       padding: 4px;
-      border-radius: 40px;
-      width: 36px;
-      height: 36px;
+      border-radius: 30px;
+      width: 32px;
+      height: 32px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
     }
-    .icon-btn:active { background: #e5e7eb; }
     .lock-btn { background: #10b98120; color: #10b981; }
-    .lock-btn.locked { background: #10b981; color: white; }
-    .reset-pk-btn { background: #ef4444; color: white; border: none; }
-    .winner-highlight {
-      background: #d1fae5;
-      border: 2px solid #10b981;
-      animation: pulse 0.5s;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-      100% { transform: scale(1); }
-    }
     .pk-footer {
       display: flex;
       justify-content: space-between;
@@ -375,7 +334,7 @@
     <div id="roundListContainer" class="round-list"></div>
   </div>
 
-  <!-- 普通淘汰赛详情页（保持原有全部功能） -->
+  <!-- 普通淘汰赛详情页 -->
   <div id="detailPage" class="page">
     <div class="detail-header">
       <button class="back-btn" id="backToMainBtn">←</button>
@@ -398,7 +357,7 @@
     <button class="btn btn-primary" id="generatePkBtn" style="margin-top: 8px;">🎯 生成 PK 赛</button>
   </div>
 
-  <!-- PK赛详情页（全新页面） -->
+  <!-- PK赛详情页 -->
   <div id="pkPage" class="page">
     <div class="detail-header">
       <button class="back-btn" id="backFromPkBtn">←</button>
@@ -407,16 +366,14 @@
       </div>
       <button class="manage-btn" id="pkManageBtn" style="opacity:0.5; pointer-events:none;">⚙️</button>
     </div>
-    <div class="pk-container" id="pkContainer">
-      <!-- 动态渲染PK赛内容 -->
-    </div>
+    <div class="pk-container" id="pkContainer"></div>
     <div class="pk-footer">
       <button class="btn btn-danger reset-pk-btn" id="resetPkBtn">重置 PK 赛</button>
       <button class="btn btn-primary" id="generateFinalFromPkBtn" disabled>🏆 生成决赛</button>
     </div>
   </div>
 
-  <!-- 管理面板（普通淘汰赛）保持不变 -->
+  <!-- 管理面板（普通淘汰赛） -->
   <div class="modal-overlay" id="manageModal">
     <div class="modal-sheet">
       <div class="modal-handle"></div>
@@ -440,6 +397,16 @@
         <button class="btn" id="closeManageBtn">取消</button>
       </div>
     </div>
+  </div>
+
+  <!-- PK赛分配界面 -->
+  <div class="pk-assign-overlay" id="pkAssignOverlay">
+    <div class="pk-assign-header">
+      <button class="btn btn-outline" id="closeAssignBtn">取消</button>
+      <span style="font-weight:600;">分配 PK 赛角色</span>
+      <button class="btn btn-primary" id="confirmAssignBtn">确认生成</button>
+    </div>
+    <div class="pk-assign-content" id="assignContent"></div>
   </div>
 </div>
 
@@ -472,6 +439,10 @@
     const pkContainer = document.getElementById('pkContainer');
     const resetPkBtn = document.getElementById('resetPkBtn');
     const generateFinalFromPkBtn = document.getElementById('generateFinalFromPkBtn');
+    const pkAssignOverlay = document.getElementById('pkAssignOverlay');
+    const closeAssignBtn = document.getElementById('closeAssignBtn');
+    const confirmAssignBtn = document.getElementById('confirmAssignBtn');
+    const assignContent = document.getElementById('assignContent');
 
     function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,6); }
     function getRoundById(id) { return appData.rounds.find(r => r.id === id); }
@@ -501,6 +472,20 @@
 
     function getPlayerAvg(player) { return player?.scores ? calculateAverage(player.scores) : null; }
 
+    // 新增：正确计算排名（同分同名次，跳跃）
+    function computeRanks(playersWithAvg) {
+      const sorted = [...playersWithAvg].sort((a,b) => b.avg - a.avg);
+      let ranks = [];
+      let currentRank = 1;
+      for (let i = 0; i < sorted.length; i++) {
+        if (i > 0 && sorted[i].avg !== sorted[i-1].avg) {
+          currentRank = i + 1;
+        }
+        ranks.push({ id: sorted[i].id, rank: currentRank });
+      }
+      return ranks;
+    }
+
     function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); }
     function loadData() {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -526,7 +511,7 @@
       if (!appData.rounds.length) {
         appData.rounds.push({
           id: generateId(), name: '普通淘汰赛1', type: 'normal',
-          judges: ['鸡','魏','夹','田','陶'],
+          judges: ['张老师','李老师','王老师','赵老师','陈老师'],
           players: [
             { id:'01', name:'选手A', scores: [null,null,null,null,null] },
             { id:'02', name:'选手B', scores: [null,null,null,null,null] },
@@ -582,7 +567,7 @@
       }));
     }
 
-    // ========== 普通淘汰赛相关函数（完全保留） ==========
+    // ========== 普通淘汰赛相关函数（完全保留原有逻辑） ==========
     function showMain() { mainPage.classList.add('active'); detailPage.classList.remove('active'); pkPage.classList.remove('active'); renderRoundList(); }
     function openDetail(roundId) {
       currentRoundId = roundId;
@@ -754,7 +739,7 @@
     document.getElementById('addPlayerInModalBtn').addEventListener('click', () => {
       const round = getCurrentRound();
       if (!round) return;
-      round.players.push({ id: `${round.players.length+1}`, name: '选手', scores: new Array(JUDGES_COUNT).fill(null) });
+      round.players.push({ id: `P${round.players.length+1}`, name: '新选手', scores: new Array(JUDGES_COUNT).fill(null) });
       renderPlayerEditList(round);
     });
     document.getElementById('saveManageBtn').addEventListener('click', () => {
@@ -813,52 +798,180 @@
       renderRoundList();
     });
 
-    // ========== 生成 PK 赛（保存源轮次ID） ==========
+    // ========== 生成 PK 赛分配界面 ==========
     generatePkBtn.addEventListener('click', () => {
       const round = getCurrentRound();
       if (!round || round.type !== 'normal') {
         alert('请先打开一个普通淘汰赛轮次');
         return;
       }
+      // 计算每个选手的平均分和排名
       const playersWithAvg = round.players.map(p => ({
         ...p,
         avg: getPlayerAvg(p)
       })).filter(p => p.avg !== null);
-      if (playersWithAvg.length < 10) {
-        alert('初赛选手不足10人，无法生成PK赛（需要至少10人完成评分）');
+      if (playersWithAvg.length === 0) {
+        alert('还没有选手完成评分，无法生成PK赛');
         return;
       }
-      const sorted = [...playersWithAvg].sort((a,b) => b.avg - a.avg);
-      const top2 = sorted.slice(0,2);
-      const rank3to10 = sorted.slice(2,10);
-      if (rank3to10.length !== 8) {
-        alert('第3-10名选手不足8人');
-        return;
-      }
-      const attackers = [...rank3to10].sort((a,b) => a.avg - b.avg).slice(0,4);
-      const defenders = rank3to10.filter(p => !attackers.includes(p)).sort((a,b) => b.avg - a.avg);
-      const pkRound = {
-        id: generateId(),
-        name: `${round.name} - PK赛`,
-        type: 'pk',
-        createdAt: new Date().toISOString(),
-        sourceRoundId: round.id,  // 保存源轮次ID，用于生成决赛时获取前两名
-        pkData: {
-          contestants: rank3to10.map(p => ({ id: p.id, name: p.name, initialRank: sorted.findIndex(s => s.id === p.id)+1 })),
-          defenderIds: defenders.map(d => d.id),
-          attackerIds: attackers.map(a => a.id),
-          lockedStatus: new Array(4).fill(false),
-          challengedOpponent: new Array(4).fill(null),
-          scores: {}
-        }
-      };
-      appData.rounds.push(pkRound);
-      saveData();
-      renderRoundList();
-      openPkDetail(pkRound.id);
+      const ranks = computeRanks(playersWithAvg);
+      const fullList = playersWithAvg.map(p => {
+        const rankObj = ranks.find(r => r.id === p.id);
+        return { ...p, rank: rankObj.rank };
+      }).sort((a,b) => a.rank - b.rank); // 按排名升序
+      // 初始分配
+      let finalists = fullList.filter(p => p.rank <= 2); // 排名1-2直接晋级
+      let remaining = fullList.filter(p => p.rank > 2);
+      let defenders = remaining.slice(0,4);
+      let attackers = remaining.slice(4);
+      attackers.sort((a,b) => b.avg - a.avg); // 分数从高到低？实际我们要低分先攻，所以最终显示时低分在上方，便于理解
+      // 但为了符合“低分先攻”，我们在分配界面上把攻擂区按分数从低到高排序
+      attackers.sort((a,b) => a.avg - b.avg);
+      // 显示分配界面
+      showAssignPanel(fullList, finalists, defenders, attackers);
     });
 
-    // ========== PK赛详情页渲染与逻辑 ==========
+    function showAssignPanel(allPlayers, finalists, defenders, attackers) {
+      // 构建三个区域的可变数组
+      let finalList = [...finalists];
+      let defendList = [...defenders];
+      let attackList = [...attackers];
+
+      function renderAssign() {
+        // 注意：allPlayers 用于校验，但不直接渲染
+        const renderSection = (title, list, type) => {
+          return `
+            <div class="assign-section">
+              <h4>${title}</h4>
+              <div class="assign-list" data-type="${type}">
+                ${list.map((p, idx) => `
+                  <div class="assign-card" data-id="${p.id}" data-type="${type}" data-idx="${idx}">
+                    <div class="assign-card-info">
+                      <div class="assign-card-name">${p.name}</div>
+                      <div class="assign-card-score">得分: ${p.avg.toFixed(2)} | 排名: ${p.rank}</div>
+                    </div>
+                    <div class="assign-card-actions">
+                      <button class="assign-icon-btn move-up" data-type="${type}" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''}>▲</button>
+                      <button class="assign-icon-btn move-down" data-type="${type}" data-idx="${idx}" ${idx === list.length-1 ? 'disabled' : ''}>▼</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        };
+        assignContent.innerHTML = `
+          ${renderSection('🏆 直接晋级区 (决赛)', finalList, 'final')}
+          ${renderSection('🛡️ 守擂区 (备战席) - 至少3人', defendList, 'defend')}
+          ${renderSection('⚔️ 攻擂区 (挑战顺序从上到下) - 至少1人', attackList, 'attack')}
+          <div class="error-msg" id="assignError"></div>
+        `;
+        // 绑定移动按钮
+        document.querySelectorAll('.move-up').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const type = btn.dataset.type;
+            const idx = parseInt(btn.dataset.idx);
+            if (type === 'final') moveItem(finalList, idx, idx-1, finalList, defendList, attackList);
+            else if (type === 'defend') moveItem(defendList, idx, idx-1, finalList, defendList, attackList);
+            else if (type === 'attack') moveItem(attackList, idx, idx-1, finalList, defendList, attackList);
+            renderAssign();
+          });
+        });
+        document.querySelectorAll('.move-down').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const type = btn.dataset.type;
+            const idx = parseInt(btn.dataset.idx);
+            if (type === 'final') moveItem(finalList, idx, idx+1, finalList, defendList, attackList);
+            else if (type === 'defend') moveItem(defendList, idx, idx+1, finalList, defendList, attackList);
+            else if (type === 'attack') moveItem(attackList, idx, idx+1, finalList, defendList, attackList);
+            renderAssign();
+          });
+        });
+      }
+
+      function moveItem(arr, from, to, finalArr, defendArr, attackArr) {
+        if (to < 0 || to >= arr.length) {
+          // 边界跨越：尝试移动区域
+          if (arr === finalArr && to === -1) return; // 晋级区向上不能移
+          if (arr === finalArr && to === arr.length) {
+            // 晋级区最后一位向下 -> 移到守擂区顶部
+            if (defendArr.length >= 0) {
+              const moved = arr.splice(from,1)[0];
+              defendArr.unshift(moved);
+            }
+            return;
+          }
+          if (arr === defendArr) {
+            if (to === -1) {
+              // 守擂区第一位向上 -> 移到晋级区底部
+              const moved = arr.splice(from,1)[0];
+              finalArr.push(moved);
+              return;
+            } else if (to === arr.length) {
+              // 守擂区最后一位向下 -> 移到攻擂区顶部
+              const moved = arr.splice(from,1)[0];
+              attackArr.unshift(moved);
+              return;
+            }
+          }
+          if (arr === attackArr) {
+            if (to === -1) {
+              // 攻擂区第一位向上 -> 移到守擂区底部
+              const moved = arr.splice(from,1)[0];
+              defendArr.push(moved);
+              return;
+            } else if (to === arr.length) return;
+          }
+          return;
+        }
+        // 区域内移动
+        [arr[from], arr[to]] = [arr[to], arr[from]];
+      }
+
+      function validateAndCreate() {
+        if (defendList.length < 3) {
+          document.getElementById('assignError').innerText = '守擂区至少需要3人，请调整';
+          return false;
+        }
+        if (attackList.length < 1) {
+          document.getElementById('assignError').innerText = '攻擂区至少需要1人，请调整';
+          return false;
+        }
+        // 生成 PK 赛轮次
+        const round = getCurrentRound();
+        const pkRound = {
+          id: generateId(),
+          name: `${round.name} - PK赛`,
+          type: 'pk',
+          createdAt: new Date().toISOString(),
+          sourceRoundId: round.id,
+          pkData: {
+            contestants: [...finalList, ...defendList, ...attackList].map(p => ({ id: p.id, name: p.name, initialRank: p.rank })),
+            defenderIds: defendList.map(d => d.id),
+            attackerIds: attackList.map(a => a.id),  // 顺序已由用户排序决定
+            lockedStatus: new Array(attackList.length).fill(false),
+            challengedOpponent: new Array(attackList.length).fill(null),
+            scores: {}
+          }
+        };
+        appData.rounds.push(pkRound);
+        saveData();
+        renderRoundList();
+        pkAssignOverlay.classList.remove('active');
+        openPkDetail(pkRound.id);
+        return true;
+      }
+
+      renderAssign();
+      confirmAssignBtn.onclick = () => validateAndCreate();
+      pkAssignOverlay.classList.add('active');
+    }
+
+    closeAssignBtn.addEventListener('click', () => {
+      pkAssignOverlay.classList.remove('active');
+    });
+
+    // ========== PK赛详情页渲染与逻辑（保留原有，仅攻擂顺序来自pkData.attackerIds） ==========
     function openPkDetail(roundId) {
       currentPkRoundId = roundId;
       const round = getCurrentPkRound();
@@ -887,73 +1000,65 @@
       }).join('');
 
       const attackersHtml = attackerIds.map((attId, idx) => {
-  const att = contestants.find(c => c.id === attId);
-  if (!att) return '';
-  const isLocked = locked[idx];
-  const chosenOppId = challengedOpp[idx];
-  const chosenOpp = chosenOppId ? contestants.find(c => c.id === chosenOppId) : null;
-  const attScore = scores[attId] !== undefined ? scores[attId] : '';
-  const oppScore = chosenOppId && scores[chosenOppId] !== undefined ? scores[chosenOppId] : '';
+        const att = contestants.find(c => c.id === attId);
+        if (!att) return '';
+        const isLocked = locked[idx];
+        const chosenOppId = challengedOpp[idx];
+        const chosenOpp = chosenOppId ? contestants.find(c => c.id === chosenOppId) : null;
+        const attScore = scores[attId] !== undefined ? scores[attId] : '';
+        const oppScore = chosenOppId && scores[chosenOppId] !== undefined ? scores[chosenOppId] : '';
 
-  // 左列：攻擂方信息
-  const leftColumn = `
-    <div class="pk-left">
-      <div class="attacker-name">${att.name}</div>
-      <div class="attacker-rank">初赛第${att.initialRank}名</div>
-      <input type="text" class="attacker-score-input" data-attacker-id="${attId}" value="${attScore}" placeholder="分数" ${isLocked ? 'disabled' : ''}>
-    </div>
-  `;
-
-  // VS 列（固定宽度，居中显示）
-  const vsColumn = `<div class="pk-vs">攻打</div>`;
-
-  let middleColumn = '';
-  let rightColumn = '';
-
-  if (chosenOpp) {
-    // 中列：对手信息
-    middleColumn = `
-      <div class="pk-middle">
-        <div class="opponent-name">🎤 ${chosenOpp.name}</div>
-        <div class="opponent-rank">初赛第${chosenOpp.initialRank}名</div>
-        <input type="text" class="opponent-score-input" data-opponent-id="${chosenOppId}" value="${oppScore}" placeholder="对手分数" ${isLocked ? 'disabled' : ''}>
-      </div>
-    `;
-    // 右列：操作按钮（不设 flex:1，由内容撑开）
-    rightColumn = `
-      <div class="pk-right">
-        <button class="icon-btn" data-idx="${idx}" data-action="rechoose" ${isLocked ? 'disabled' : ''} title="重选对手">🔄</button>
-        <button class="icon-btn lock-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''} title="锁定">🔒</button>
-      </div>
-    `;
-  } else {
-  // 未选择对手：中间显示选择对手按钮，右边为空
-  middleColumn = `
-    <div class="pk-middle">
-      <button class="btn btn-sm select-opponent-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''}>选择对手</button>
-    </div>
-  `;
-  rightColumn = `<div class="pk-right"></div>`;
-}
-
-  return `
-    <div class="attacker-card ${isLocked ? 'locked' : ''}" data-attacker-index="${idx}">
-      ${leftColumn}
-      ${vsColumn}
-      ${middleColumn}
-      ${rightColumn}
-    </div>
-  `;
-}).join('');
+        const leftColumn = `
+          <div class="pk-left">
+            <div class="attacker-name">${att.name}</div>
+            <div class="attacker-rank">初赛第${att.initialRank}名</div>
+            <input type="text" class="attacker-score-input" data-attacker-id="${attId}" value="${attScore}" placeholder="分数" ${isLocked ? 'disabled' : ''}>
+          </div>
+        `;
+        const vsColumn = `<div class="pk-vs">VS</div>`;
+        let middleColumn = '';
+        let rightColumn = '';
+        if (chosenOpp) {
+          middleColumn = `
+            <div class="pk-middle">
+              <div class="opponent-name">🎤 ${chosenOpp.name}</div>
+              <div class="opponent-rank">初赛第${chosenOpp.initialRank}名</div>
+              <input type="text" class="opponent-score-input" data-opponent-id="${chosenOppId}" value="${oppScore}" placeholder="对手分数" ${isLocked ? 'disabled' : ''}>
+            </div>
+          `;
+          rightColumn = `
+            <div class="pk-right">
+              <button class="icon-btn" data-idx="${idx}" data-action="rechoose" ${isLocked ? 'disabled' : ''} title="重选对手">🔄</button>
+              <button class="icon-btn lock-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''} title="锁定">🔒</button>
+            </div>
+          `;
+        } else {
+          middleColumn = `<div class="pk-middle"></div>`;
+          rightColumn = `
+            <div class="pk-right">
+              <button class="btn btn-sm select-opponent-btn" data-idx="${idx}" ${isLocked ? 'disabled' : ''}>选择对手</button>
+            </div>
+          `;
+        }
+        return `
+          <div class="attacker-card ${isLocked ? 'locked' : ''}" data-attacker-index="${idx}" style="display: flex; gap: 12px; align-items: stretch;">
+            ${leftColumn}
+            ${vsColumn}
+            ${middleColumn}
+            ${rightColumn}
+          </div>
+        `;
+      }).join('');
 
       pkContainer.innerHTML = `
         <div class="pk-defenders-area">
-          <h3>🏆 当前备战席</h3>
+          <h3>🏆 当前备战席（守擂方）</h3>
           <div class="defenders-grid">${defendersHtml || '<div>暂无</div>'}</div>
         </div>
         <div class="attacker-list">${attackersHtml}</div>
       `;
 
+      // 绑定事件（与之前相同）
       document.querySelectorAll('.attacker-score-input').forEach(inp => {
         inp.addEventListener('change', (e) => {
           const attId = inp.dataset.attackerId;
@@ -1062,94 +1167,63 @@
     resetPkBtn.addEventListener('click', () => {
       const round = getCurrentPkRound();
       if (!round || round.type !== 'pk') return;
-      if (!confirm('重置会将所有PK分数和挑战进度清空，回到初赛初始状态，确定吗？')) return;
+      if (!confirm('重置会将所有PK分数和挑战进度清空，回到分配时的初始状态，确定吗？')) return;
       const data = round.pkData;
-      const contestants = data.contestants;
+      // 重置分数
       data.scores = {};
-      data.lockedStatus = new Array(4).fill(false);
-      data.challengedOpponent = new Array(4).fill(null);
-      const sorted = [...contestants].sort((a,b) => a.initialRank - b.initialRank);
-      const defenders = sorted.slice(0,4);
-      const attackers = sorted.slice(4,8);
-      data.defenderIds = defenders.map(d => d.id);
-      data.attackerIds = attackers.map(a => a.id);
+      data.lockedStatus = new Array(data.attackerIds.length).fill(false);
+      data.challengedOpponent = new Array(data.attackerIds.length).fill(null);
+      // defenderIds 和 attackerIds 保持不变（用户分配时的状态）
       saveData();
       renderPkPage();
       generateFinalFromPkBtn.disabled = true;
     });
 
-    // ========== 生成决赛轮次（自动从源轮次获取前两名） ==========
     generateFinalFromPkBtn.addEventListener('click', () => {
-  const pkRound = getCurrentPkRound();
-  if (!pkRound || pkRound.type !== 'pk') return;
-  const data = pkRound.pkData;
-  const allLocked = data.lockedStatus.every(v => v === true);
-  if (!allLocked) {
-    alert('请先完成所有PK挑战');
-    return;
-  }
-  const sourceRound = pkRound.sourceRoundId ? getRoundById(pkRound.sourceRoundId) : null;
-  let topTwoPlayers = [];
-  if (sourceRound && sourceRound.type === 'normal') {
-    const playersWithAvg = sourceRound.players.map(p => ({
-      ...p,
-      avg: getPlayerAvg(p)
-    })).filter(p => p.avg !== null);
-    const sorted = [...playersWithAvg].sort((a,b) => b.avg - a.avg);
-    topTwoPlayers = sorted.slice(0,2).map(p => ({ id: p.id, name: p.name }));
-  }
-  if (topTwoPlayers.length !== 2) {
-    alert('无法从初赛轮次获取前两名选手，请确保初赛已完成评分');
-    return;
-  }
-  const finalists = [...data.defenderIds];
-  const finalRound = {
-    id: generateId(),
-    name: `${pkRound.name} - 决赛`,
-    type: 'normal',
-    createdAt: new Date().toISOString(),
-    judges: Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`),
-    players: []
-  };
-
-  // 按源轮次的原始 players 数组顺序添加选手
-  let orderedPlayers = [];
-  if (sourceRound && sourceRound.type === 'normal') {
-    for (let originalPlayer of sourceRound.players) {
-      const isTopTwo = topTwoPlayers.some(tp => tp.id === originalPlayer.id);
-      const isWinner = finalists.some(fid => fid === originalPlayer.id);
-      if (isTopTwo || isWinner) {
-        orderedPlayers.push({
-          id: originalPlayer.id,
-          name: originalPlayer.name,
-          scores: new Array(JUDGES_COUNT).fill(null)
-        });
+      const pkRound = getCurrentPkRound();
+      if (!pkRound || pkRound.type !== 'pk') return;
+      const data = pkRound.pkData;
+      const allLocked = data.lockedStatus.every(v => v === true);
+      if (!allLocked) {
+        alert('请先完成所有PK挑战');
+        return;
       }
-    }
-  }
-
-  // 补充遗漏（容错）
-  if (orderedPlayers.length !== 6) {
-    for (let p of topTwoPlayers) {
-      if (!orderedPlayers.some(op => op.id === p.id)) {
-        orderedPlayers.push({ id: p.id, name: p.name, scores: new Array(JUDGES_COUNT).fill(null) });
+      const sourceRound = pkRound.sourceRoundId ? getRoundById(pkRound.sourceRoundId) : null;
+      if (!sourceRound || sourceRound.type !== 'normal') {
+        alert('无法找到初赛轮次');
+        return;
       }
-    }
-    for (let id of finalists) {
-      if (!orderedPlayers.some(op => op.id === id)) {
+      // 获取分配时直接晋级的选手（pkData.contestants中不包含晋级选手，需从源轮次中根据排名≤2取得）
+      const playersWithAvg = sourceRound.players.map(p => ({ ...p, avg: getPlayerAvg(p) })).filter(p => p.avg !== null);
+      const ranks = computeRanks(playersWithAvg);
+      const fullWithRank = playersWithAvg.map(p => ({ ...p, rank: ranks.find(r => r.id === p.id).rank }));
+      const finalists = fullWithRank.filter(p => p.rank <= 2).map(p => ({ id: p.id, name: p.name }));
+      const pkWinners = data.defenderIds.map(id => {
         const c = data.contestants.find(c => c.id === id);
-        if (c) orderedPlayers.push({ id: c.id, name: c.name, scores: new Array(JUDGES_COUNT).fill(null) });
+        return { id: c.id, name: c.name };
+      });
+      const allFinalPlayers = [...finalists, ...pkWinners];
+      // 按源轮次原始 players 顺序排序
+      const ordered = [];
+      for (let orig of sourceRound.players) {
+        if (allFinalPlayers.some(p => p.id === orig.id)) {
+          ordered.push({ id: orig.id, name: orig.name, scores: new Array(JUDGES_COUNT).fill(null) });
+        }
       }
-    }
-  }
-
-  finalRound.players = orderedPlayers;
-  appData.rounds.push(finalRound);
-  saveData();
-  renderRoundList();
-  alert(`决赛轮次“${finalRound.name}”已创建，共有${finalRound.players.length}人（按初赛原始顺序排列）`);
-  openDetail(finalRound.id);
-});
+      const finalRound = {
+        id: generateId(),
+        name: `${pkRound.name} - 决赛`,
+        type: 'normal',
+        createdAt: new Date().toISOString(),
+        judges: Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`),
+        players: ordered
+      };
+      appData.rounds.push(finalRound);
+      saveData();
+      renderRoundList();
+      alert(`决赛轮次“${finalRound.name}”已创建，共有${finalRound.players.length}人`);
+      openDetail(finalRound.id);
+    });
 
     backFromPkBtn.addEventListener('click', () => {
       showMain();

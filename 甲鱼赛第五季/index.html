@@ -798,7 +798,7 @@
       renderRoundList();
     });
 
-    // ========== 生成 PK 赛分配界面（四个区域） ==========
+    // ========== 生成 PK 赛分配界面（四个区域，边界移动） ==========
     generatePkBtn.addEventListener('click', () => {
       const round = getCurrentRound();
       if (!round || round.type !== 'normal') {
@@ -819,20 +819,20 @@
         return { ...p, rank: rankObj.rank };
       }).sort((a,b) => a.rank - b.rank); // 按排名升序
 
-      // 初始分配：晋级区 rank<=2；剩余选手按分数从高到低排序
+      // 初始分配：晋级区 rank<=2
       let finalists = fullList.filter(p => p.rank <= 2);
       let remaining = fullList.filter(p => p.rank > 2);
-      remaining.sort((a,b) => b.avg - a.avg);
+      remaining.sort((a,b) => b.avg - a.avg); // 按分数从高到低
       let defenders = remaining.slice(0,4);
       let attackers = remaining.slice(4,8);
       let eliminated = remaining.slice(8);
-      // 攻擂区按分数从低到高排序（低分先攻）
-      attackers.sort((a,b) => a.avg - b.avg);
+      // 分配界面攻擂区按分数从高到低排序（便于查看）
+      attackers.sort((a,b) => b.avg - a.avg);
 
-      showAssignPanel(fullList, finalists, defenders, attackers, eliminated);
+      showAssignPanel(finalists, defenders, attackers, eliminated);
     });
 
-    function showAssignPanel(allPlayers, finalists, defenders, attackers, eliminated) {
+    function showAssignPanel(finalists, defenders, attackers, eliminated) {
       let finalList = [...finalists];
       let defendList = [...defenders];
       let attackList = [...attackers];
@@ -851,8 +851,8 @@
                       <div class="assign-card-score">得分: ${p.avg.toFixed(2)} | 排名: ${p.rank}</div>
                     </div>
                     <div class="assign-card-actions">
-                      <button class="assign-icon-btn move-up" data-type="${type}" data-idx="${idx}" ${idx === 0 ? 'disabled' : ''}>▲</button>
-                      <button class="assign-icon-btn move-down" data-type="${type}" data-idx="${idx}" ${idx === list.length-1 ? 'disabled' : ''}>▼</button>
+                      <button class="assign-icon-btn move-up" data-type="${type}" data-idx="${idx}">▲</button>
+                      <button class="assign-icon-btn move-down" data-type="${type}" data-idx="${idx}">▼</button>
                     </div>
                   </div>
                 `).join('')}
@@ -867,74 +867,81 @@
           ${renderSection('❌ 淘汰区 (不参与后续)', eliminatedList, 'eliminated')}
           <div class="error-msg" id="assignError"></div>
         `;
-        // 绑定移动按钮
+        // 绑定移动按钮 - 使用事件委托避免重复绑定
         document.querySelectorAll('.move-up').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const type = btn.dataset.type;
-            const idx = parseInt(btn.dataset.idx);
-            if (type === 'final') moveItem(finalList, idx, idx-1, finalList, defendList, attackList, eliminatedList);
-            else if (type === 'defend') moveItem(defendList, idx, idx-1, finalList, defendList, attackList, eliminatedList);
-            else if (type === 'attack') moveItem(attackList, idx, idx-1, finalList, defendList, attackList, eliminatedList);
-            else if (type === 'eliminated') moveItem(eliminatedList, idx, idx-1, finalList, defendList, attackList, eliminatedList);
-            renderAssign();
-          });
+          btn.removeEventListener('click', handleMove);
+          btn.addEventListener('click', handleMove);
         });
         document.querySelectorAll('.move-down').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const type = btn.dataset.type;
-            const idx = parseInt(btn.dataset.idx);
-            if (type === 'final') moveItem(finalList, idx, idx+1, finalList, defendList, attackList, eliminatedList);
-            else if (type === 'defend') moveItem(defendList, idx, idx+1, finalList, defendList, attackList, eliminatedList);
-            else if (type === 'attack') moveItem(attackList, idx, idx+1, finalList, defendList, attackList, eliminatedList);
-            else if (type === 'eliminated') moveItem(eliminatedList, idx, idx+1, finalList, defendList, attackList, eliminatedList);
-            renderAssign();
-          });
+          btn.removeEventListener('click', handleMove);
+          btn.addEventListener('click', handleMove);
         });
       }
 
-      function moveItem(arr, from, to, finalArr, defendArr, attackArr, elimArr) {
+      function handleMove(e) {
+        const btn = e.currentTarget;
+        const type = btn.dataset.type;
+        const idx = parseInt(btn.dataset.idx);
+        const isUp = btn.classList.contains('move-up');
+        let arr, from, to;
+        if (type === 'final') arr = finalList;
+        else if (type === 'defend') arr = defendList;
+        else if (type === 'attack') arr = attackList;
+        else arr = eliminatedList;
+
+        from = idx;
+        to = isUp ? from - 1 : from + 1;
+
+        // 边界移动：跨区
         if (to < 0 || to >= arr.length) {
-          // 边界跨越
-          if (arr === finalArr && to === -1) return;
-          if (arr === finalArr && to === arr.length) {
-            if (defendArr.length >= 0) {
+          if (arr === finalList && to === -1) return;
+          if (arr === finalList && to === arr.length) {
+            if (defendList.length >= 0) {
               const moved = arr.splice(from,1)[0];
-              defendArr.unshift(moved);
+              defendList.unshift(moved);
+              renderAssign();
             }
             return;
           }
-          if (arr === defendArr) {
+          if (arr === defendList) {
             if (to === -1) {
               const moved = arr.splice(from,1)[0];
-              finalArr.push(moved);
+              finalList.push(moved);
+              renderAssign();
               return;
             } else if (to === arr.length) {
               const moved = arr.splice(from,1)[0];
-              attackArr.unshift(moved);
+              attackList.unshift(moved);
+              renderAssign();
               return;
             }
           }
-          if (arr === attackArr) {
+          if (arr === attackList) {
             if (to === -1) {
               const moved = arr.splice(from,1)[0];
-              defendArr.push(moved);
+              defendList.push(moved);
+              renderAssign();
               return;
             } else if (to === arr.length) {
               const moved = arr.splice(from,1)[0];
-              elimArr.unshift(moved);
+              eliminatedList.unshift(moved);
+              renderAssign();
               return;
             }
           }
-          if (arr === elimArr) {
+          if (arr === eliminatedList) {
             if (to === -1) {
               const moved = arr.splice(from,1)[0];
-              attackArr.push(moved);
+              attackList.push(moved);
+              renderAssign();
               return;
             } else if (to === arr.length) return;
           }
           return;
         }
+        // 区域内移动
         [arr[from], arr[to]] = [arr[to], arr[from]];
+        renderAssign();
       }
 
       function validateAndCreate() {
@@ -956,7 +963,7 @@
           pkData: {
             contestants: [...defendList, ...attackList].map(p => ({ id: p.id, name: p.name, initialRank: p.rank })),
             defenderIds: defendList.map(d => d.id),
-            attackerIds: attackList.map(a => a.id),
+            attackerIds: attackList.map(a => a.id),  // 顺序即为用户调整后的挑战顺序
             lockedStatus: new Array(attackList.length).fill(false),
             challengedOpponent: new Array(attackList.length).fill(null),
             scores: {}
@@ -979,7 +986,7 @@
       pkAssignOverlay.classList.remove('active');
     });
 
-    // ========== PK赛详情页渲染与逻辑 ==========
+    // ========== PK赛详情页渲染与逻辑（不变） ==========
     function openPkDetail(roundId) {
       currentPkRoundId = roundId;
       const round = getCurrentPkRound();
@@ -1066,7 +1073,7 @@
         <div class="attacker-list">${attackersHtml}</div>
       `;
 
-      // 绑定事件
+      // 绑定事件（省略，与之前相同）
       document.querySelectorAll('.attacker-score-input').forEach(inp => {
         inp.addEventListener('change', (e) => {
           const attId = inp.dataset.attackerId;

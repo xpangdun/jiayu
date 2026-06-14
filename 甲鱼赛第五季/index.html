@@ -321,6 +321,46 @@
       gap: 12px;
       margin-top: 16px;
     }
+    /* 同分裁决自定义模态框 */
+.tie-modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.tie-modal {
+  background: white;
+  border-radius: 20px;
+  width: 320px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+}
+.tie-modal p {
+  font-size: 1rem;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+.tie-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.tie-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tie-btn-a { background: #ffb431; color: white; }
+.tie-btn-b { background: #566ae4; color: white; }
+.tie-btn-cancel { background: #e5e7eb; color: #374151; }
   </style>
 </head>
 <body style="padding: 0px;">
@@ -679,6 +719,34 @@
         }
       }
     }
+    function showTieBreakDialog(attName, oppName, callback) {
+  // 移除已存在的弹窗
+  const existing = document.querySelector('.tie-modal-overlay');
+  if (existing) existing.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'tie-modal-overlay';
+  overlay.innerHTML = `
+    <div class="tie-modal">
+      <p>⚖️ 同分！请选择胜者</p>
+      <div class="tie-buttons">
+        <button class="tie-btn tie-btn-a" data-winner="att">${attName} 胜</button>
+        <button class="tie-btn tie-btn-b" data-winner="opp">${oppName} 胜</button>
+        <button class="tie-btn tie-btn-cancel">取消</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  const handleClick = (e) => {
+    const winner = e.target.dataset.winner;
+    if (winner === 'att') callback('att');
+    else if (winner === 'opp') callback('opp');
+    else callback(null);
+    overlay.remove();
+  };
+  overlay.querySelectorAll('button').forEach(btn => btn.addEventListener('click', handleClick));
+}
     function renderRanking() {
       const round = getCurrentRound();
       if (!round) { rankingContainer.innerHTML = ''; return; }
@@ -1129,43 +1197,59 @@
         });
       });
       document.querySelectorAll('.lock-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const idx = parseInt(btn.dataset.idx);
-          if (locked[idx]) return;
-          const attId = attackerIds[idx];
-          const oppId = data.challengedOpponent[idx];
-          if (!oppId) {
-            alert('请先选择对手');
-            return;
-          }
-          const attScore = scores[attId];
-          const oppScore = scores[oppId];
-          if (attScore === undefined || attScore === '' || oppScore === undefined || oppScore === '') {
-            alert('请先填写双方分数');
-            return;
-          }
-          let winnerId = null;
-          if (attScore > oppScore) winnerId = attId;
-          else if (attScore < oppScore) winnerId = oppId;
-          else {
-            const attName = contestants.find(c => c.id === attId).name;
-            const oppName = contestants.find(c => c.id === oppId).name;
-            const choice = confirm(`同分！请选择胜者：\n确定 = ${attName}胜\n取消 = ${oppName}胜`);
-            winnerId = choice ? attId : oppId;
-          }
-          let newDefenders = [...data.defenderIds];
-          if (winnerId === attId) {
-            newDefenders = newDefenders.filter(id => id !== oppId);
-            if (!newDefenders.includes(attId)) newDefenders.push(attId);
-          }
-          data.defenderIds = newDefenders;
-          data.lockedStatus[idx] = true;
-          saveData();
-          renderPkPage();
-          const allLocked = data.lockedStatus.every(v => v === true);
-          generateFinalFromPkBtn.disabled = !allLocked;
-        });
+  btn.addEventListener('click', (e) => {
+    const idx = parseInt(btn.dataset.idx);
+    if (locked[idx]) return;
+    const attId = attackerIds[idx];
+    const oppId = data.challengedOpponent[idx];
+    if (!oppId) {
+      alert('请先选择对手');
+      return;
+    }
+    const attScore = scores[attId];
+    const oppScore = scores[oppId];
+    if (attScore === undefined || attScore === '' || oppScore === undefined || oppScore === '') {
+      alert('请先填写双方分数');
+      return;
+    }
+    let winnerId = null;
+    if (attScore > oppScore) winnerId = attId;
+    else if (attScore < oppScore) winnerId = oppId;
+    else {
+      // 同分情况：调用自定义弹窗
+      const attName = contestants.find(c => c.id === attId).name;
+      const oppName = contestants.find(c => c.id === oppId).name;
+      showTieBreakDialog(attName, oppName, (selected) => {
+        if (selected === null) return; // 取消，不锁定
+        const winnerId = selected === 'att' ? attId : oppId;
+        let newDefenders = [...data.defenderIds];
+        if (winnerId === attId) {
+          newDefenders = newDefenders.filter(id => id !== oppId);
+          if (!newDefenders.includes(attId)) newDefenders.push(attId);
+        }
+        data.defenderIds = newDefenders;
+        data.lockedStatus[idx] = true;
+        saveData();
+        renderPkPage();
+        const allLocked = data.lockedStatus.every(v => v === true);
+        generateFinalFromPkBtn.disabled = !allLocked;
       });
+      return; // 等待弹窗结果，不继续执行
+    }
+    // 无同分的正常流程
+    let newDefenders = [...data.defenderIds];
+    if (winnerId === attId) {
+      newDefenders = newDefenders.filter(id => id !== oppId);
+      if (!newDefenders.includes(attId)) newDefenders.push(attId);
+    }
+    data.defenderIds = newDefenders;
+    data.lockedStatus[idx] = true;
+    saveData();
+    renderPkPage();
+    const allLocked = data.lockedStatus.every(v => v === true);
+    generateFinalFromPkBtn.disabled = !allLocked;
+  });
+});
       document.querySelectorAll('[data-action="rechoose"]').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const idx = parseInt(btn.dataset.idx);

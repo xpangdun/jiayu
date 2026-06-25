@@ -1343,7 +1343,7 @@ pkManageModal.addEventListener('click', e => {
       const defendersHtml = defenderIds.map(defId => {
         const contestant = contestants.find(c => c.id === defId);
         if (!contestant) return '';
-        return `<div class="defender-card"><div class="defender-name">${contestant.id} | ${contestant.name}</div><div class="defender-rank">初赛第${contestant.initialRank}名</div></div>`;
+        return `<div class="defender-card"><div class="defender-name">${contestant.id} ${contestant.name}</div><div class="defender-rank">初赛第${contestant.initialRank}</div></div>`;
       }).join('');
 
       // 构建攻擂方卡片（包含评分图标）
@@ -1376,7 +1376,7 @@ pkManageModal.addEventListener('click', e => {
           const oppScoreDisplay = scores[chosenOppId] !== undefined ? scores[chosenOppId] : '';
           middleColumn = `
             <div class="pk-middle">
-              <div class="opponent-name">🎤 ${chosenOpp.name}</div>
+              <div class="opponent-name">${chosenOpp.id} | ${chosenOpp.name}</div>
               <div class="opponent-rank">初赛第${oppContestant ? oppContestant.initialRank : '?'}名</div>
               <div class="score-row">
                 <span class="score-icon ${isLocked ? 'disabled-icon' : ''}" data-player-id="${chosenOppId}" data-player-name="${chosenOpp.name}" style="${isLocked ? 'opacity: 0.5; pointer-events: none;' : ''}">✏️</span>

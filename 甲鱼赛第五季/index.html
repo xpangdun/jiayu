@@ -852,6 +852,10 @@
       judgesEditContainer.innerHTML = round.judges.map((n,i) => `<input type="text" value="${n}" data-judge-index="${i}" class="judge-name-input" style="width:40px;">`).join('');
       renderPlayerEditList(round);
       manageModal.classList.add('active');
+        // 禁用背景滚动
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
     }
     function renderPlayerEditList(round) {
       playersEditList.innerHTML = round.players.map((p, index) => `
@@ -913,10 +917,29 @@
       detailRoundNameInput.value = round.name;
       renderScores(); renderRanking();
       manageModal.classList.remove('active');
+        // 恢复滚动
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
     });
-    document.getElementById('closeManageBtn').addEventListener('click', () => manageModal.classList.remove('active'));
+    
+    // 取消时恢复
+document.getElementById('closeManageBtn').addEventListener('click', () => {
+  manageModal.classList.remove('active');
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+});
     document.getElementById('openManagePanelBtn').addEventListener('click', openManage);
-    manageModal.addEventListener('click', e => { if(e.target === manageModal) manageModal.classList.remove('active'); });
+    // 点击背景遮罩关闭时恢复
+manageModal.addEventListener('click', e => {
+  if (e.target === manageModal) {
+    manageModal.classList.remove('active');
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+  }
+});
     document.getElementById('backToMainBtn').addEventListener('click', showMain);
     document.getElementById('createRoundBtn').addEventListener('click', () => {
       const type = confirm('创建普通淘汰赛？\n确定=普通淘汰赛，取消=PK赛') ? 'normal' : 'pk';
@@ -1148,6 +1171,10 @@
       const judges = round.pkData.judges || Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`);
       pkJudgesEditContainer.innerHTML = judges.map((n,i) => `<input type="text" value="${n}" data-judge-index="${i}" class="judge-name-input" style="width:40px;">`).join('');
       pkManageModal.classList.add('active');
+        // 禁用背景滚动
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
     }
     function savePkManage() {
       const round = getCurrentPkRound();
@@ -1159,11 +1186,29 @@
       saveData();
       renderPkPage(); // 刷新页面以更新评委标签
       pkManageModal.classList.remove('active');
+  // 恢复滚动
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';        
     }
     pkManagePanelBtn.addEventListener('click', openPkManage);
     savePkManageBtn.addEventListener('click', savePkManage);
-    closePkManageBtn.addEventListener('click', () => pkManageModal.classList.remove('active'));
-    pkManageModal.addEventListener('click', e => { if(e.target === pkManageModal) pkManageModal.classList.remove('active'); });
+    // 取消时恢复
+closePkManageBtn.addEventListener('click', () => {
+  pkManageModal.classList.remove('active');
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+});
+    // 点击背景遮罩关闭时恢复
+pkManageModal.addEventListener('click', e => {
+  if (e.target === pkManageModal) {
+    pkManageModal.classList.remove('active');
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+  }
+});
 
     // ========== PK赛详情页渲染与逻辑（含评分弹窗） ==========
     function openPkDetail(roundId) {
@@ -1179,35 +1224,40 @@
 
     // 评分弹窗
     function showScoreDialog(playerId, playerName, round) {
-      const data = round.pkData;
-      const judges = data.judges || Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`);
-      const raw = data.rawScores[playerId] || new Array(JUDGES_COUNT).fill(null);
-      
-      // 移除旧弹窗
-      const old = document.querySelector('.score-dialog-overlay');
-      if (old) old.remove();
+  // 禁用页面滚动
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
 
-      const overlay = document.createElement('div');
-      overlay.className = 'score-dialog-overlay';
-      overlay.innerHTML = `
-        <div class="score-dialog">
-          <h3>🎤 ${playerName} 评委打分</h3>
-          <div class="judges-inputs">
-            ${judges.map((name, i) => `
-              <div class="judge-item">
-                <span class="judge-label">${name}</span>
-                <input type="text" inputmode="decimal" pattern="[0-9]*\.?[05]?" placeholder="-" value="${raw[i] !== null ? raw[i] : ''}" data-judge-index="${i}" class="score-input-dialog">
-              </div>
-            `).join('')}
+  const data = round.pkData;
+  const judges = data.judges || Array.from({length:JUDGES_COUNT}, (_,i)=>`评委${i+1}`);
+  const raw = data.rawScores[playerId] || new Array(JUDGES_COUNT).fill(null);
+  
+  // 移除旧弹窗
+  const old = document.querySelector('.score-dialog-overlay');
+  if (old) old.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'score-dialog-overlay';
+  overlay.innerHTML = `
+    <div class="score-dialog">
+      <h3>🎤 ${playerName} 评委打分</h3>
+      <div class="judges-inputs">
+        ${judges.map((name, i) => `
+          <div class="judge-item">
+            <span class="judge-label">${name}</span>
+            <input type="text" inputmode="decimal" pattern="[0-9]*\.?[05]?" placeholder="-" value="${raw[i] !== null ? raw[i] : ''}" data-judge-index="${i}" class="score-input-dialog">
           </div>
-          <div class="avg-display" id="dialogAvg">平均分: --</div>
-          <div class="dialog-buttons">
-            <button class="confirm-btn" id="dialogConfirm">确认</button>
-            <button class="cancel-btn" id="dialogCancel">取消</button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(overlay);
+        `).join('')}
+      </div>
+      <div class="avg-display" id="dialogAvg">平均分: --</div>
+      <div class="dialog-buttons">
+        <button class="confirm-btn" id="dialogConfirm">确认</button>
+        <button class="cancel-btn" id="dialogCancel">取消</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 
       const inputs = overlay.querySelectorAll('.score-input-dialog');
       const avgDisplay = overlay.querySelector('#dialogAvg');
@@ -1253,10 +1303,18 @@
         saveData();
         renderPkPage();
         overlay.remove();
+            // 恢复滚动
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
       });
 
       overlay.querySelector('#dialogCancel').addEventListener('click', () => {
         overlay.remove();
+            // 恢复滚动
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
       });
     }
 
@@ -1441,6 +1499,12 @@
             // 同分弹窗
             const attName = contestants.find(c => c.id === attId).name;
             const oppName = contestants.find(c => c.id === oppId).name;
+
+// 禁用页面滚动
+document.body.style.overflow = 'hidden';
+document.body.style.position = 'fixed';
+document.body.style.width = '100%';
+            
             // 使用自定义弹窗
             const tieOverlay = document.createElement('div');
             tieOverlay.className = 'tie-modal-overlay';
@@ -1462,6 +1526,10 @@
                 else if (winner === 'opp') winnerId = oppId;
                 else winnerId = null;
                 tieOverlay.remove();
+                    // 恢复滚动
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
                 if (winnerId === null) return;
                 // 执行锁定
                 let newDefenders = [...data.defenderIds];
